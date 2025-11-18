@@ -38,7 +38,7 @@ const items = [
   },
   {
     title: 'Customer service',
-    desc: 'Support & helpdesk.',
+    desc: 'Live chat support via Telegram.',
     link: 'https://t.me/goblin_niko4'
   }
 ]

@@ -62,13 +62,13 @@ export default function CustomerService({ onClose }) {
           <div className="bg-white/5 p-6 rounded-lg">
             <h3 className="font-semibold mb-3">Quick Links</h3>
             <div className="space-y-2 text-sm">
-              <a href="#docs" className="block text-purple-400 hover:text-purple-300 transition">
+              <a href="https://onchainweb.cc/docs" target="_blank" rel="noopener noreferrer" className="block text-purple-400 hover:text-purple-300 transition">
                 📚 Documentation
               </a>
-              <a href="#faq" className="block text-purple-400 hover:text-purple-300 transition">
+              <a href="https://onchainweb.cc/faq" target="_blank" rel="noopener noreferrer" className="block text-purple-400 hover:text-purple-300 transition">
                 ❓ FAQ
               </a>
-              <a href="#guides" className="block text-purple-400 hover:text-purple-300 transition">
+              <a href="https://onchainweb.cc/guides" target="_blank" rel="noopener noreferrer" className="block text-purple-400 hover:text-purple-300 transition">
                 📖 Guides & Tutorials
               </a>
             </div>

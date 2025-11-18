@@ -92,10 +92,10 @@ export default function Hero() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#app" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg font-semibold shadow-md">
+            <a href="https://onchainweb.cc/app" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg font-semibold shadow-md hover:opacity-95 transition">
               Launch App
             </a>
-            <a href="#docs" className="inline-flex items-center gap-2 px-5 py-3 border border-white/10 rounded-lg text-sm hover:bg-white/3">Documentation</a>
+            <a href="https://onchainweb.cc/docs" className="inline-flex items-center gap-2 px-5 py-3 border border-white/10 rounded-lg text-sm hover:bg-white/3 transition">Documentation</a>
           </div>
 
           <div className="mt-8 grid grid-cols-2 gap-3 max-w-sm text-sm">

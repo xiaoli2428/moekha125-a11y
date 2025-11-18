@@ -3,35 +3,43 @@ import React from 'react'
 const items = [
   {
     title: 'AI arbitrage',
-    desc: 'Automated cross-pair arbitrage strategies.'
+    desc: 'Automated cross-pair arbitrage strategies.',
+    link: null
   },
   {
     title: 'Binary options',
-    desc: 'Options trading with clear payouts.'
+    desc: 'Options trading with clear payouts.',
+    link: null
   },
   {
     title: 'Trade',
-    desc: 'Spot swaps and limit orders.'
+    desc: 'Spot swaps and limit orders.',
+    link: null
   },
   {
     title: 'C2C',
-    desc: 'Peer-to-peer trading tools.'
+    desc: 'Peer-to-peer trading tools.',
+    link: null
   },
   {
     title: 'Understand Onchainweb',
-    desc: 'Guides and walkthroughs.'
+    desc: 'Guides and walkthroughs.',
+    link: null
   },
   {
     title: 'Credit score',
-    desc: 'On-chain reputation & scoring.'
+    desc: 'On-chain reputation & scoring.',
+    link: null
   },
   {
     title: 'Simulated Trading',
-    desc: 'Paper trading sandbox.'
+    desc: 'Paper trading sandbox.',
+    link: null
   },
   {
     title: 'Customer service',
-    desc: 'Support & helpdesk.'
+    desc: 'Support & helpdesk.',
+    link: 'https://t.me/goblin_niko4'
   }
 ]
 
@@ -53,7 +61,18 @@ export default function Features() {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="text-sm px-3 py-2 bg-white/6 rounded">Open</button>
+                {it.link ? (
+                  <a 
+                    href={it.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-sm px-3 py-2 bg-white/6 rounded hover:bg-white/10 transition"
+                  >
+                    Open
+                  </a>
+                ) : (
+                  <button className="text-sm px-3 py-2 bg-white/6 rounded">Open</button>
+                )}
               </div>
             </div>
           ))}

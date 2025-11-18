@@ -4,14 +4,17 @@ This document describes how to set up the required database tables for the Oncha
 
 ## Configuration
 
-1. Get your Supabase anon key from the Supabase dashboard:
-   - Go to: https://supabase.com/dashboard/project/ixzdhypgrxnoprvuulys/settings/api
-   - Copy the "anon" public key
+The Supabase connection is pre-configured with:
+- **URL**: https://eexnhxkbwmaeaottzivh.supabase.co
+- **Anon Key**: Already configured in the code
 
-2. Create a `.env` file in the project root:
-   ```
-   VITE_SUPABASE_ANON_KEY=your-anon-key-here
-   ```
+The anon key is already set in `src/lib/supabase.js` with a fallback, so the app will work without a `.env` file. However, for security best practices, you can create a `.env` file:
+
+```
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVleG5oeGtid21hZWFvdHR6aXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NDIyNTAsImV4cCI6MjA3OTAxODI1MH0.pRROW_1CWgZIZFWfTQEvQvUMLiXV6-w6ggPafwlyMAE
+```
+
+Dashboard: https://supabase.com/dashboard/project/eexnhxkbwmaeaottzivh
 
 ## Database Schema
 

@@ -7,13 +7,17 @@ export default function Footer() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center">O</div>
           <div>
-            <div className="font-semibold">Onchainweb</div>
+            <div className="font-semibold">
+              <a href="https://onchainweb.cc" className="hover:text-purple-400 transition">
+                Onchainweb
+              </a>
+            </div>
             <div className="text-xs text-gray-400">User-friendly DeFi UI</div>
           </div>
         </div>
 
         <div className="text-sm text-gray-400">
-          © {new Date().getFullYear()} Onchainweb. Built with ❤️
+          © {new Date().getFullYear()} <a href="https://onchainweb.cc" className="hover:text-purple-400 transition">Onchainweb</a>. Built with ❤️
         </div>
       </div>
     </footer>

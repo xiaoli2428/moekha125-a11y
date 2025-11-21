@@ -167,8 +167,8 @@ export default function Hero() {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <button className="px-3 py-2 rounded bg-white/6 text-sm">Add Liquidity</button>
-                <button className="px-3 py-2 rounded border border-white/8 text-sm">Swap</button>
+                <button className="px-3 py-2 rounded bg-white/6 text-sm" aria-label="Add Liquidity to ETH/USDC Pool">Add Liquidity</button>
+                <button className="px-3 py-2 rounded border border-white/8 text-sm" aria-label="Swap in ETH/USDC Pool">Swap</button>
               </div>
             </div>
 

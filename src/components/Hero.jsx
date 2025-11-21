@@ -38,35 +38,66 @@ function CandlestickChart() {
         </div>
       </div>
       
-      {/* Candlestick Chart */}
-      <div className="h-32 flex items-end justify-around gap-1 px-2">
-        {candles.map((candle, i) => {
-          const height = ((candle.high - candle.low) / 50) * 100
-          const bodyHeight = Math.abs(candle.close - candle.open) / 50 * 100
-          const wickTop = ((candle.high - Math.max(candle.open, candle.close)) / 50) * 100
-          const wickBottom = ((Math.min(candle.open, candle.close) - candle.low) / 50) * 100
-          
-          return (
-            <div key={i} className="flex-1 flex flex-col items-center justify-end" style={{ height: '100%' }}>
-              {/* Upper wick */}
-              <div 
-                className={`w-0.5 ${candle.up ? 'bg-green-400' : 'bg-red-400'}`}
-                style={{ height: `${wickTop}%` }}
-              />
-              {/* Body */}
-              <div 
-                className={`w-full ${candle.up ? 'bg-green-400' : 'bg-red-400'} rounded-sm`}
-                style={{ height: `${bodyHeight}%`, minHeight: '4px' }}
-              />
-              {/* Lower wick */}
-              <div 
-                className={`w-0.5 ${candle.up ? 'bg-green-400' : 'bg-red-400'}`}
-                style={{ height: `${wickBottom}%` }}
-              />
-            </div>
-          )
-        })}
-      </div>
+      {/* Accessible Candlestick Chart */}
+      <figure>
+        <svg
+          role="img"
+          aria-label="ETH/USDC candlestick chart showing recent price movements"
+          width="100%"
+          height="128"
+          viewBox="0 0 180 128"
+          className="w-full h-32"
+        >
+          <title>ETH/USDC candlestick chart showing recent price movements</title>
+          {candles.map((candle, i) => {
+            // Chart dimensions
+            const chartHeight = 120
+            const chartBottom = 124
+            const candleWidth = 20
+            const gap = 10
+            const x = i * (candleWidth + gap) + 10
+            // Normalize values to chart height
+            const minPrice = Math.min(...candles.map(c => c.low))
+            const maxPrice = Math.max(...candles.map(c => c.high))
+            const priceRange = maxPrice - minPrice
+            const scale = priceRange === 0 ? 1 : chartHeight / priceRange
+            const yHigh = chartBottom - (candle.high - minPrice) * scale
+            const yLow = chartBottom - (candle.low - minPrice) * scale
+            const yOpen = chartBottom - (candle.open - minPrice) * scale
+            const yClose = chartBottom - (candle.close - minPrice) * scale
+            const bodyY = Math.min(yOpen, yClose)
+            const bodyHeight = Math.abs(yClose - yOpen) || 4
+            const color = candle.up ? "#4ade80" : "#f87171" // Tailwind green-400/red-400
+            return (
+              <g key={i}>
+                {/* Wick */}
+                <line
+                  x1={x + candleWidth / 2}
+                  x2={x + candleWidth / 2}
+                  y1={yHigh}
+                  y2={yLow}
+                  stroke={color}
+                  strokeWidth="2"
+                  aria-label={`Candle ${i + 1} wick: high ${candle.high}, low ${candle.low}`}
+                />
+                {/* Body */}
+                <rect
+                  x={x}
+                  y={bodyY}
+                  width={candleWidth}
+                  height={bodyHeight < 4 ? 4 : bodyHeight}
+                  fill={color}
+                  rx="2"
+                  aria-label={`Candle ${i + 1} body: open ${candle.open}, close ${candle.close}`}
+                />
+              </g>
+            )
+          })}
+        </svg>
+        <figcaption className="sr-only">
+          Candlestick chart showing recent ETH/USDC price movements. Each candle represents open, close, high, and low prices for a time period.
+        </figcaption>
+      </figure>
       
       <div className="mt-3 text-xs text-gray-500 text-center">Live price updates every 3s</div>
     </div>

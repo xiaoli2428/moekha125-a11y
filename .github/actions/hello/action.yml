@@ -1,0 +1,13 @@
+name: "Hello Action"
+description: "A small JavaScript GitHub Action to satisfy CodeQL actions scanning"
+inputs:
+  who-to-greet:
+    description: 'Who to greet'
+    required: false
+    default: 'World'
+outputs:
+  greeting:
+    description: 'Greeting message'
+runs:
+  using: 'node16'
+  main: 'index.js'

@@ -100,7 +100,7 @@ export function WalletProvider({ children }) {
       if (err.code === 4001) {
         setError('Please connect to MetaMask.')
       } else {
-        setError('An error occurred while connecting to MetaMask.')
+        setError(`An error occurred while connecting: ${err.message}`)
       }
       console.error('Error connecting wallet:', err)
     } finally {

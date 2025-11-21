@@ -46,8 +46,22 @@ export function WalletProvider({ children }) {
   }
 
   const handleChainChanged = (chainId) => {
-    setChainId(parseInt(chainId, 16))
-    window.location.reload()
+    const parsedChainId = parseInt(chainId, 16)
+    setChainId(parsedChainId)
+    // Re-fetch account and balance on chain change
+    if (window.ethereum) {
+      window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0])
+          getBalance(accounts[0])
+        } else {
+          setAccount(null)
+          setBalance(null)
+        }
+      }).catch((err) => {
+        setError('Failed to fetch accounts after chain change')
+      })
+    }
   }
 
   const checkIfWalletIsConnected = async () => {

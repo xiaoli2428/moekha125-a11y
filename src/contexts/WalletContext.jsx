@@ -81,7 +81,7 @@ export function WalletProvider({ children }) {
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      setError('MetaMask is not installed. Please install MetaMask to continue.')
+      setError('No Web3 wallet detected. Please install a Web3 wallet to continue.')
       return
     }
 

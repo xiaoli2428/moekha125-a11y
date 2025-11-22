@@ -1,0 +1,88 @@
+name: CI (main + PR)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  detect-and-test:
+    name: Detect language and run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f package-lock.json ] || [ -f package.json ]; then
+            echo "manager=node" > $GITHUB_OUTPUT
+          elif [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            echo "manager=python" > $GITHUB_OUTPUT
+          else
+            echo "manager=none" > $GITHUB_OUTPUT
+          fi
+
+      - name: Cache npm
+        if: steps.detect.outputs.manager == 'node'
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Use Node.js
+        if: steps.detect.outputs.manager == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install and test (npm)
+        if: steps.detect.outputs.manager == 'node'
+        run: |
+          npm ci --no-audit --prefer-offline
+          if [ -f package.json ] && grep -q "\"test\"" package.json; then
+            npm test
+          else
+            echo "No npm test script defined; skipping npm test"
+          fi
+
+      - name: Cache pip
+        if: steps.detect.outputs.manager == 'python'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Set up Python
+        if: steps.detect.outputs.manager == 'python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install and test (python)
+        if: steps.detect.outputs.manager == 'python'
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            python -m pip install --upgrade pip
+            pip install . || true
+          fi
+          if command -v pytest >/dev/null 2>&1; then
+            pytest -q
+          else
+            echo "pytest not found; skipping tests"
+          fi
+
+      - name: No-op
+        if: steps.detect.outputs.manager == 'none'
+        run: echo "No recognized test config found; ensure you add tests or update CI workflow"

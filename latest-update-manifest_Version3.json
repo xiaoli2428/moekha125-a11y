@@ -1,0 +1,31 @@
+{
+  "manifest_version": "1.0",
+  "snapshot_time_utc": "2025-11-23T16:50:41Z",
+  "generated_by": "copilot (xiaoli2428)",
+  "description": "Manifest of repository files and permalinks for distribution. Includes file list and snapshot time to minimize errors during distribution.",
+  "files": [
+    { "path": ".github", "type": "dir", "url": "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/.github" },
+    { "path": ".gitignore", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/.gitignore" },
+    { "path": "README.md", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/README.md" },
+    { "path": "README.md.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/README.md.txt" },
+    { "path": "dynamic", "type": "dir", "url": "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/dynamic" },
+    { "path": "index.html", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/index.html" },
+    { "path": "index.html.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/index.html.txt" },
+    { "path": "package.json", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/package.json" },
+    { "path": "package.json.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/package.json.txt" },
+    { "path": "postcss.config.cjs", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/postcss.config.cjs" },
+    { "path": "postcss.config.cjs.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/postcss.config.cjs.txt" },
+    { "path": "src/App.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20App.jsx.txt" },
+    { "path": "src/components/Features.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Features.jsx.txt" },
+    { "path": "src/components/Footer.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Footer.jsx.txt" },
+    { "path": "src/components/Header.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Header.jsx.txt" },
+    { "path": "src/components/Hero.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Hero.jsx.txt" },
+    { "path": "src/index.css.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20index.css.txt" },
+    { "path": "src/main.jsx.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20main.jsx.txt" },
+    { "path": "src", "type": "dir", "url": "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/src" },
+    { "path": "tailwind.config.cjs", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/tailwind.config.cjs" },
+    { "path": "tailwind.config.cjs.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/tailwind.config.cjs.txt" },
+    { "path": "vite.config.js", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/vite.config.js" },
+    { "path": "vite.config.js.txt", "type": "file", "url": "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/vite.config.js.txt" }
+  ]
+}

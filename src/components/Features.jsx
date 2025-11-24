@@ -53,7 +53,7 @@ export default function Features() {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="text-sm px-3 py-2 bg-white/6 rounded">Open</button>
+                <button type="button" className="text-sm px-3 py-2 bg-white/6 rounded">Open</button>
               </div>
             </div>
           ))}

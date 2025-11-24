@@ -18,8 +18,8 @@ export default function Header() {
       </nav>
 
       <div className="flex items-center space-x-3">
-        <button className="hidden md:inline-block px-4 py-2 border border-white/10 rounded-lg text-sm hover:bg-white/5">Connect</button>
-        <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-sm font-semibold shadow-md hover:opacity-95">Launch App</button>
+        <button type="button" className="hidden md:inline-block px-4 py-2 border border-white/10 rounded-lg text-sm hover:bg-white/5">Connect</button>
+        <button type="button" className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-sm font-semibold shadow-md hover:opacity-95">Launch App</button>
       </div>
     </header>
   )

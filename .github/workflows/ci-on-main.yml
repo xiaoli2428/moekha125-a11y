@@ -18,42 +18,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Detect package manager
+      - name: Detect package manager and lockfile
         id: detect
         run: |
-          if [ -f package.json ]; then
-            echo "manager=node" >> $GITHUB_OUTPUT
-          elif [ -f package-lock.json ]; then
-            # If lockfile exists without package.json, still treat as node
-            echo "manager=node" >> $GITHUB_OUTPUT
-          elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f Pipfile ]; then
-            echo "manager=python" >> $GITHUB_OUTPUT
+          # Detect project type
+          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
+            echo "manager=node" > $GITHUB_OUTPUT
+          elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f Pipfile ] || [ -f setup.cfg ] || [ -f setup.py ]; then
+            echo "manager=python" > $GITHUB_OUTPUT
           else
-            echo "manager=none" >> $GITHUB_OUTPUT
+            echo "manager=none" > $GITHUB_OUTPUT
           fi
 
-      - name: Setup Node.js and cache npm
-        if: steps.detect.outputs.manager == 'node'
+          # Detect presence of Node lockfile for cache decision
+          if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
+            echo "lockfile=true" > $GITHUB_OUTPUT
+          else
+            echo "lockfile=false" > $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node (with cache)
+        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
+      - name: Setup Node (no cache)
+        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Install and test (npm)
         if: steps.detect.outputs.manager == 'node'
         run: |
           set -euo pipefail
+          # Deterministic install when lockfile exists
           if [ -f package-lock.json ]; then
             npm ci --no-audit --prefer-offline
           else
             npm install --no-audit --prefer-offline
           fi
 
-          # Run npm test only if a test script is defined in package.json
-          if node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); process.exit(!(p.scripts && p.scripts.test) ? 0 : 1)"; then
+          # Run npm test only if a test script exists
+          if node -e "try { const p=require('./package.json'); process.exit(!(p.scripts && p.scripts.test)); } catch(e){ process.exit(0); }"; then
             echo "No npm test script defined; skipping npm test"
           else
-            echo "npm test script found, running tests"
+            echo "npm test script found — running tests"
             npm test
           fi
 
@@ -78,15 +90,15 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
-          elif [ -f pyproject.toml ]; then
+          elif [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
             pip install .
+          else
+            echo "No Python dependency files found; skipping install"
           fi
 
-          # Ensure pytest is available
           if ! command -v pytest >/dev/null 2>&1; then
             pip install pytest
           fi
-
           pytest -q
 
       - name: No-op

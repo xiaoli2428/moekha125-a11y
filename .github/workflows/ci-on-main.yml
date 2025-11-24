@@ -21,36 +21,40 @@ jobs:
       - name: Detect package manager
         id: detect
         run: |
-          if [ -f package-lock.json ] || [ -f package.json ]; then
-            echo "manager=node" > $GITHUB_OUTPUT
-          elif [ -f requirements.txt ] || [ -f pyproject.toml ]; then
-            echo "manager=python" > $GITHUB_OUTPUT
+          if [ -f package.json ]; then
+            echo "manager=node" >> $GITHUB_OUTPUT
+          elif [ -f package-lock.json ]; then
+            # If lockfile exists without package.json, still treat as node
+            echo "manager=node" >> $GITHUB_OUTPUT
+          elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f Pipfile ]; then
+            echo "manager=python" >> $GITHUB_OUTPUT
           else
-            echo "manager=none" > $GITHUB_OUTPUT
+            echo "manager=none" >> $GITHUB_OUTPUT
           fi
 
-      - name: Cache npm
-        if: steps.detect.outputs.manager == 'node'
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
-
-      - name: Use Node.js
+      - name: Setup Node.js and cache npm
         if: steps.detect.outputs.manager == 'node'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: Install and test (npm)
         if: steps.detect.outputs.manager == 'node'
         run: |
-          npm ci --no-audit --prefer-offline
-          if [ -f package.json ] && grep -q "\"test\"" package.json; then
-            npm test
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --prefer-offline
           else
+            npm install --no-audit --prefer-offline
+          fi
+
+          # Run npm test only if a test script is defined in package.json
+          if node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); process.exit(!(p.scripts && p.scripts.test) ? 0 : 1)"; then
             echo "No npm test script defined; skipping npm test"
+          else
+            echo "npm test script found, running tests"
+            npm test
           fi
 
       - name: Cache pip
@@ -70,18 +74,20 @@ jobs:
       - name: Install and test (python)
         if: steps.detect.outputs.manager == 'python'
         run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
             pip install -r requirements.txt
           elif [ -f pyproject.toml ]; then
-            python -m pip install --upgrade pip
-            pip install . || true
+            pip install .
           fi
-          if command -v pytest >/dev/null 2>&1; then
-            pytest -q
-          else
-            echo "pytest not found; skipping tests"
+
+          # Ensure pytest is available
+          if ! command -v pytest >/dev/null 2>&1; then
+            pip install pytest
           fi
+
+          pytest -q
 
       - name: No-op
         if: steps.detect.outputs.manager == 'none'

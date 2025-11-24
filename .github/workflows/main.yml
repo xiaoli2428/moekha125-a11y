@@ -25,7 +25,7 @@ jobs:
 
           if [ -f package.json ]; then
             manager=node
-            if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ]; then
+            if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
               lockfile=true
             fi
           elif [ -f requirements.txt ] || ls *.py 1>/dev/null 2>/dev/null; then

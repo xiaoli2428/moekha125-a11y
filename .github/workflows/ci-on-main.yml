@@ -22,7 +22,7 @@ jobs:
         id: detect
         run: |
           # Detect project type
-          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
+          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
             echo "manager=node" > $GITHUB_OUTPUT
           elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f Pipfile ] || [ -f setup.cfg ] || [ -f setup.py ]; then
             echo "manager=python" > $GITHUB_OUTPUT
@@ -31,7 +31,7 @@ jobs:
           fi
 
           # Detect presence of Node lockfile for cache decision
-          if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
+          if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
             echo "lockfile=true" > $GITHUB_OUTPUT
           else
             echo "lockfile=false" > $GITHUB_OUTPUT

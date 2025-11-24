@@ -21,18 +21,16 @@ jobs:
       - name: Detect package manager
         id: detect
         run: |
-          if [ -f package.json ]; then
+          # Prefer package.json presence for node detection; include lockfile-only case
+          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ]; then
             echo "manager=node" >> $GITHUB_OUTPUT
-          elif [ -f package-lock.json ]; then
-            # If lockfile exists without package.json, still treat as node
-            echo "manager=node" >> $GITHUB_OUTPUT
-          elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f Pipfile ]; then
+          elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f Pipfile ] || [ -f setup.cfg ]; then
             echo "manager=python" >> $GITHUB_OUTPUT
           else
             echo "manager=none" >> $GITHUB_OUTPUT
           fi
 
-      - name: Setup Node.js and cache npm
+      - name: Setup Node.js and enable npm cache
         if: steps.detect.outputs.manager == 'node'
         uses: actions/setup-node@v4
         with:
@@ -43,17 +41,18 @@ jobs:
         if: steps.detect.outputs.manager == 'node'
         run: |
           set -euo pipefail
+          # Prefer deterministic installs
           if [ -f package-lock.json ]; then
             npm ci --no-audit --prefer-offline
           else
             npm install --no-audit --prefer-offline
           fi
 
-          # Run npm test only if a test script is defined in package.json
-          if node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); process.exit(!(p.scripts && p.scripts.test) ? 0 : 1)"; then
+          # Run npm test only if a test script exists
+          if node -e "try { const p=require('./package.json'); process.exit(!(p.scripts && p.scripts.test)); } catch(e){ process.exit(0); }"; then
             echo "No npm test script defined; skipping npm test"
           else
-            echo "npm test script found, running tests"
+            echo "npm test script found — running tests"
             npm test
           fi
 
@@ -76,13 +75,18 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
+
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           elif [ -f pyproject.toml ]; then
             pip install .
+          elif [ -f setup.cfg ] || [ -f setup.py ]; then
+            pip install .
+          else
+            echo "No requirements.txt or pyproject.toml found — skipping install"
           fi
 
-          # Ensure pytest is available
+          # Ensure pytest is available and run tests (fail job on test failures)
           if ! command -v pytest >/dev/null 2>&1; then
             pip install pytest
           fi

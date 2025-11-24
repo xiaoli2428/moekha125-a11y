@@ -38,20 +38,20 @@ jobs:
           fi
 
       - name: Setup Node (with cache)
-        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true'
+        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Setup Node (no cache)
-        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false'
+        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install and test (npm)
-        if: steps.detect.outputs.manager == 'node'
+        if: ${{ steps.detect.outputs.manager == 'node' }}
         run: |
           set -euo pipefail
           # Deterministic install when lockfile exists
@@ -62,15 +62,16 @@ jobs:
           fi
 
           # Run npm test only if a test script exists
-          if node -e "try { const p=require('./package.json'); process.exit(!(p.scripts && p.scripts.test)); } catch(e){ process.exit(0); }"; then
-            echo "No npm test script defined; skipping npm test"
-          else
+          # Exit code 0 when test script exists; 1 otherwise
+          if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
             echo "npm test script found — running tests"
             npm test
+          else
+            echo "No npm test script defined; skipping npm test"
           fi
 
       - name: Cache pip
-        if: steps.detect.outputs.manager == 'python'
+        if: ${{ steps.detect.outputs.manager == 'python' }}
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -78,13 +79,13 @@ jobs:
           restore-keys: ${{ runner.os }}-pip-
 
       - name: Set up Python
-        if: steps.detect.outputs.manager == 'python'
+        if: ${{ steps.detect.outputs.manager == 'python' }}
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Install and test (python)
-        if: steps.detect.outputs.manager == 'python'
+        if: ${{ steps.detect.outputs.manager == 'python' }}
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
@@ -102,5 +103,5 @@ jobs:
           pytest -q
 
       - name: No-op
-        if: steps.detect.outputs.manager == 'none'
+        if: ${{ steps.detect.outputs.manager == 'none' }}
         run: echo "No recognized test config found; ensure you add tests or update CI workflow"

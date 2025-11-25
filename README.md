@@ -2,6 +2,8 @@
 
 This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style homepage inspired by the screenshot and ddefi3.com. Project name: Onchainweb.
 
+**Live URL:** [https://www.onchainweb.co/](https://www.onchainweb.co/)
+
 ## Quick start
 
 1. **Install dependencies:**

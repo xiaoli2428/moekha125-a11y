@@ -16,42 +16,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Detect package manager and lockfile
         id: detect
         run: |
           # Detect project type
-          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
-            echo "manager=node" >> $GITHUB_OUTPUT
+          if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
+            echo "manager=node" > $GITHUB_OUTPUT
           elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f Pipfile ] || [ -f setup.cfg ] || [ -f setup.py ]; then
-            echo "manager=python" >> $GITHUB_OUTPUT
+            echo "manager=python" > $GITHUB_OUTPUT
           else
-            echo "manager=none" >> $GITHUB_OUTPUT
+            echo "manager=none" > $GITHUB_OUTPUT
           fi
 
           # Detect presence of Node lockfile for cache decision
-          if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f npm-shrinkwrap.json ]; then
-            echo "lockfile=true" >> $GITHUB_OUTPUT
+          if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
+            echo "lockfile=true" > $GITHUB_OUTPUT
           else
-            echo "lockfile=false" >> $GITHUB_OUTPUT
+            echo "lockfile=false" > $GITHUB_OUTPUT
           fi
 
       - name: Setup Node (with cache)
-        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
+        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Setup Node (no cache)
-        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
+        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
         with:
           node-version: '18'
 
       - name: Install and test (npm)
-        if: steps.detect.outputs.manager == 'node'
+        if: ${{ steps.detect.outputs.manager == 'node' }}
         run: |
           set -euo pipefail
           # Deterministic install when lockfile exists
@@ -62,29 +62,30 @@ jobs:
           fi
 
           # Run npm test only if a test script exists
-          if node -e "try { const p=require('./package.json'); process.exit(!(p.scripts && p.scripts.test)); } catch(e){ process.exit(0); }"; then
-            echo "No npm test script defined; skipping npm test"
-          else
+          # Exit code 0 when test script exists; 1 otherwise
+          if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
             echo "npm test script found — running tests"
             npm test
+          else
+            echo "No npm test script defined; skipping npm test"
           fi
 
       - name: Cache pip
-        if: steps.detect.outputs.manager == 'python'
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        if: ${{ steps.detect.outputs.manager == 'python' }}
+        uses: actions/cache@9cbf8fb1e5229a55fa5ea7dc36ec4428d2d89da8
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
 
       - name: Set up Python
-        if: steps.detect.outputs.manager == 'python'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        if: ${{ steps.detect.outputs.manager == 'python' }}
+        uses: actions/setup-python@70bb553c9df08e1f410c506d9a3611616e04472d
         with:
           python-version: '3.x'
 
       - name: Install and test (python)
-        if: steps.detect.outputs.manager == 'python'
+        if: ${{ steps.detect.outputs.manager == 'python' }}
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
@@ -102,5 +103,5 @@ jobs:
           pytest -q
 
       - name: No-op
-        if: steps.detect.outputs.manager == 'none'
+        if: ${{ steps.detect.outputs.manager == 'none' }}
         run: echo "No recognized test config found; ensure you add tests or update CI workflow"

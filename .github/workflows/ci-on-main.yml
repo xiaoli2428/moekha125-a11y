@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Detect package manager and lockfile
         id: detect
@@ -39,14 +39,14 @@ jobs:
 
       - name: Setup Node (with cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Setup Node (no cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -72,7 +72,7 @@ jobs:
 
       - name: Cache pip
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/cache@9cbf8fb1e5229a55fa5ea7dc36ec4428d2d89da8
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -80,7 +80,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/setup-python@70bb553c9df08e1f410c506d9a3611616e04472d
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 

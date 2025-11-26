@@ -524,14 +524,17 @@ export default {
       if (existingIdx >= 0) {
         // Re-add if it was removed
         if (state.zones[existingIdx].removed) {
-          state.zones[existingIdx] = { zone, addedAt: now, removed: false };
+          const newZones = state.zones.map((z, idx) =>
+            idx === existingIdx ? { zone, addedAt: now, removed: false } : z
+          );
           // Sort recent-first
-          state.zones.sort((a, b) => b.addedAt - a.addedAt);
+          newZones.sort((a, b) => b.addedAt - a.addedAt);
+          state.zones = newZones;
           state.updatedAt = now;
         }
       } else {
         // Add new zone at the beginning (recent-first)
-        state.zones.unshift({ zone, addedAt: now, removed: false });
+        state.zones = [{ zone, addedAt: now, removed: false }, ...state.zones];
         state.updatedAt = now;
       }
       
@@ -542,11 +545,10 @@ export default {
     // Remove a timezone (soft delete with tombstone)
     const removeTimezone = (zone) => {
       const now = Date.now();
-      const idx = state.zones.findIndex(z => z.zone === zone);
-      if (idx >= 0) {
-        state.zones[idx] = { ...state.zones[idx], removed: true, addedAt: now };
-        state.updatedAt = now;
-      }
+      state.zones = state.zones.map(z =>
+        z.zone === zone ? { ...z, removed: true, addedAt: now } : z
+      );
+      state.updatedAt = now;
     };
     
     // Toggle 12/24 hour format
@@ -565,10 +567,16 @@ export default {
     };
     
     // Copy to clipboard
-    const copyToClipboard = () => {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(exportConfig());
-        showToast('Copied to clipboard', 'success');
+    const copyToClipboard = async () => {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(exportConfig());
+          showToast('Copied to clipboard', 'success');
+        } else {
+          showToast('Clipboard not supported', 'error');
+        }
+      } catch {
+        showToast('Failed to copy to clipboard', 'error');
       }
     };
     

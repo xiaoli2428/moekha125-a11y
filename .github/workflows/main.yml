@@ -1,0 +1,76 @@
+name: Main CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@67efd012dd5fd4b1e8fd670b9e6e766d518fad7c # v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@9ba2c813bdb76ea6a4984b91eb6b6458c538f88b # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Test
+        run: npm test --if-present
+
+  python:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Setup Python
+        uses: actions/setup-python@7e3cb3566ed1e4e341944bab96c2e3985136a476 # v4
+        with:
+          python-version: '3.x'
+
+      - name: Cache pip
+        uses: actions/cache@9ba2c813bdb76ea6a4984b91eb6b6458c538f88b # v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Test
+        run: |
+          if command -v pytest &> /dev/null; then
+            pytest -q
+          fi

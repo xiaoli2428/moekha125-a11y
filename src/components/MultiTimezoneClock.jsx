@@ -550,9 +550,17 @@ export default function MultiTimezoneClock({
           <button
             type="button"
             className="multi-timezone-clock__btn multi-timezone-clock__btn--small"
-            onClick={() => {
-              navigator.clipboard?.writeText(exportConfig());
-              showToast('Copied to clipboard', 'success');
+            onClick={async () => {
+              try {
+                if (navigator.clipboard?.writeText) {
+                  await navigator.clipboard.writeText(exportConfig());
+                  showToast('Copied to clipboard', 'success');
+                } else {
+                  showToast('Clipboard not supported', 'error');
+                }
+              } catch {
+                showToast('Failed to copy to clipboard', 'error');
+              }
             }}
           >
             Copy to Clipboard

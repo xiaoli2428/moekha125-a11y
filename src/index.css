@@ -1,6 +1,8 @@
+/* stylelint-disable at-rule-no-unknown */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 body {
   background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 10%),

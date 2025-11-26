@@ -2,7 +2,7 @@
 
 This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style homepage inspired by the screenshot and ddefi3.com. Project name: Onchainweb.
 
-**Live URL:** [https://www.onchainweb.co/](https://www.onchainweb.co/)
+**Live URL:** https://www.onchainweb.com/
 
 ## Quick start
 
@@ -43,4 +43,4 @@ After running `npm run build`, the `dist/` folder contains the production-ready 
 - The UI uses mock data for balances and markets. Real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) can be integrated on request.
 - Project uses ESM ("type": "module" in package.json)
 - Vite 6.x for optimal performance and security
-- All dependencies are up-to-date with no security vulnerabilities
+- Dependencies should be audited regularly; this repository enables Dependabot (see .github/dependabot.yml). Run `npm audit` locally and review Dependabot PRs to keep dependencies secure.

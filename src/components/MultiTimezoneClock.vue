@@ -473,9 +473,11 @@ export default {
             showToast('Clocks synced from another tab', 'info');
           }
           
-          state.zones = resolved.zones;
-          state.hour12 = resolved.hour12;
-          state.updatedAt = resolved.updatedAt;
+          Object.assign(state, {
+            zones: resolved.zones.map(z => ({ ...z })),
+            hour12: resolved.hour12,
+            updatedAt: resolved.updatedAt
+          });
         } catch {
           // Invalid JSON, ignore
         }
@@ -525,7 +527,7 @@ export default {
         // Re-add if it was removed
         if (state.zones[existingIdx].removed) {
           const newZones = state.zones.map((z, idx) =>
-            idx === existingIdx ? { zone, addedAt: now, removed: false } : z
+            idx === existingIdx ? { ...z, zone, addedAt: now, removed: false } : { ...z }
           );
           // Sort recent-first
           newZones.sort((a, b) => b.addedAt - a.addedAt);
@@ -534,7 +536,7 @@ export default {
         }
       } else {
         // Add new zone at the beginning (recent-first)
-        state.zones = [{ zone, addedAt: now, removed: false }, ...state.zones];
+        state.zones = [{ zone, addedAt: now, removed: false }, ...state.zones.map(z => ({ ...z }))];
         state.updatedAt = now;
       }
       
@@ -546,7 +548,7 @@ export default {
     const removeTimezone = (zone) => {
       const now = Date.now();
       state.zones = state.zones.map(z =>
-        z.zone === zone ? { ...z, removed: true, addedAt: now } : z
+        z.zone === zone ? { ...z, removed: true, addedAt: now } : { ...z }
       );
       state.updatedAt = now;
     };

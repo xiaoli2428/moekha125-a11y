@@ -35,7 +35,7 @@ export default function Hero() {
             </a>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 max-w-sm text-sm" role="region" aria-label="Platform statistics">
+          <dl className="mt-8 grid grid-cols-2 gap-3 max-w-sm text-sm" role="region" aria-label="Platform statistics">
             <div className="p-3 bg-white/3 rounded-lg">
               <dt className="text-xs text-gray-200">TVL</dt>
               <dd className="mt-1 font-bold" aria-label="Total Value Locked: Loading">• • • •</dd>
@@ -44,7 +44,7 @@ export default function Hero() {
               <dt className="text-xs text-gray-200">24h Volume</dt>
               <dd className="mt-1 font-bold" aria-label="24 hour volume: Loading">• • • •</dd>
             </div>
-          </div>
+          </dl>
         </div>
 
         <div className="relative" role="region" aria-labelledby="pool-preview-heading">

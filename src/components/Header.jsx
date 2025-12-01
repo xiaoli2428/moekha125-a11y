@@ -3,7 +3,7 @@ import React from 'react'
 export default function Header() {
   return (
     <header className="py-6 px-6 md:px-12 flex items-center justify-between bg-transparent" role="banner">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:bg-purple-600 focus:text-white focus:px-4 focus:py-2 focus:z-50">
+      <a href="#main-content" className="sr-only focus:fixed focus:top-4 focus:left-4 focus:w-auto focus:h-auto focus:p-4 focus:bg-purple-600 focus:text-white focus:z-50 focus:clip-auto focus:whitespace-normal">
         Skip to main content
       </a>
       <div className="flex items-center space-x-3">

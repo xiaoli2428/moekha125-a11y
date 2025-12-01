@@ -1,0 +1,326 @@
+/**
+ * Shared CSS for MultiTimezoneClock components (React and Vue).
+ * Provides styling for the clock container, cards, controls, and toast notifications.
+ */
+
+.multi-timezone-clock {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.multi-timezone-clock__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.multi-timezone-clock__search {
+  flex: 1 1 200px;
+  min-width: 180px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.multi-timezone-clock__search:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 1px;
+  border-color: #4f46e5;
+}
+
+.multi-timezone-clock__dropdown {
+  position: relative;
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+
+.multi-timezone-clock__dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.multi-timezone-clock__dropdown-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.multi-timezone-clock__dropdown-item:hover,
+.multi-timezone-clock__dropdown-item:focus {
+  background-color: #f3f4f6;
+}
+
+.multi-timezone-clock__dropdown-item--selected {
+  background-color: #e0e7ff;
+}
+
+.multi-timezone-clock__btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease;
+}
+
+.multi-timezone-clock__btn:hover {
+  background-color: #f3f4f6;
+}
+
+.multi-timezone-clock__btn:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 1px;
+}
+
+.multi-timezone-clock__btn--primary {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+.multi-timezone-clock__btn--primary:hover {
+  background: #4338ca;
+}
+
+.multi-timezone-clock__btn--danger {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.multi-timezone-clock__btn--danger:hover {
+  background: #dc2626;
+}
+
+.multi-timezone-clock__btn--small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.multi-timezone-clock__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.multi-timezone-clock__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.multi-timezone-clock__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.multi-timezone-clock__card {
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.multi-timezone-clock__card--removed {
+  opacity: 0.5;
+  background: #9ca3af;
+}
+
+.multi-timezone-clock__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.multi-timezone-clock__zone-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  word-break: break-word;
+  max-width: calc(100% - 30px);
+}
+
+.multi-timezone-clock__remove-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background-color 0.15s ease;
+}
+
+.multi-timezone-clock__remove-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.multi-timezone-clock__remove-btn:focus {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.multi-timezone-clock__time {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.multi-timezone-clock__date {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.multi-timezone-clock__empty {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* Toast notification styles */
+.multi-timezone-clock__toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 320px;
+}
+
+.multi-timezone-clock__toast {
+  background: #1f2937;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.9rem;
+  animation: toast-slide-in 0.3s ease;
+}
+
+.multi-timezone-clock__toast--info {
+  background: #3b82f6;
+}
+
+.multi-timezone-clock__toast--success {
+  background: #10b981;
+}
+
+.multi-timezone-clock__toast--warning {
+  background: #f59e0b;
+}
+
+.multi-timezone-clock__toast--error {
+  background: #ef4444;
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Import/Export textarea styles */
+.multi-timezone-clock__import-export {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.multi-timezone-clock__textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.multi-timezone-clock__textarea:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 1px;
+  border-color: #4f46e5;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .multi-timezone-clock__search,
+  .multi-timezone-clock__btn,
+  .multi-timezone-clock__textarea {
+    background: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+
+  .multi-timezone-clock__dropdown-list {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .multi-timezone-clock__dropdown-item:hover,
+  .multi-timezone-clock__dropdown-item:focus {
+    background-color: #4b5563;
+  }
+
+  .multi-timezone-clock__dropdown-item--selected {
+    background-color: #4338ca;
+  }
+
+  .multi-timezone-clock__import-export {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .multi-timezone-clock__empty {
+    color: #9ca3af;
+  }
+}
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .multi-timezone-clock__toast {
+    animation: none;
+  }
+}

@@ -86,9 +86,16 @@ jobs:
         if: ${{ steps.detect.outputs.manager == 'python' }}
         run: |
           set -euo pipefail
+          python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
             python -m pip install -r requirements.txt
+          elif [ -f Pipfile ]; then
+            python -m pip install pipenv
+            pipenv install --dev
+          elif [ -f setup.cfg ] || [ -f setup.py ]; then
+            python -m pip install .
+          else
+            echo "No recognized Python dependency file found; skipping install"
           fi
           # Run tests (assumes pytest is used)
           if command -v pytest >/dev/null 2>&1; then

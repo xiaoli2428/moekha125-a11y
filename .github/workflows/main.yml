@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - id: detect
         name: Detect package manager / test config
@@ -37,14 +37,14 @@ jobs:
 
       - name: Setup Node (with cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@5c3f4b4954a18e2eebf54ebb2c1e196d0f1c1aad  # v4.0.2
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Setup Node (no cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@5c3f4b4954a18e2eebf54ebb2c1e196d0f1c1aad  # v4.0.2
         with:
           node-version: '18'
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Cache pip
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/cache@9ba2c813bdb76ea6a4984b91eb6b6458c538f88b
+        uses: actions/cache@b2aaef7675235c9ab2e2e3980d5bbbb4301008bb  # v4.2.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -78,7 +78,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/setup-python@7e3cb3566ed1e4e341944bab96c2e3985136a476
+        uses: actions/setup-python@e2c1e2cdc50831d2d9bcdbe3c848a8d675c73f18  # v4.7.0
         with:
           python-version: '3.x'
 

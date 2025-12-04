@@ -37,14 +37,16 @@ jobs:
 
       - name: Setup Node (with cache)
         if: ${{ steps.detect.outputs. manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
+        - uses: actions/setup-node @v3
+        67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Setup Node (no cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps. detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
+        - uses: actions/setup-node @v3
+        67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
         with:
           node-version: '18'
 

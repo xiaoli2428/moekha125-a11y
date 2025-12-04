@@ -36,7 +36,7 @@ jobs:
           echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node (with cache)
-        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
+        if: steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true'
         uses: actions/setup-node@v4 # v4.0.2
         with:
           node-version: '18'

@@ -97,13 +97,13 @@ export default function Features() {
         <h2 className="text-2xl font-bold mb-6">What you can do</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {items.map((it) => (
-            <div key={it.title} className="p-5 bg-white/3 rounded-xl hover:scale-[1.02] transition">
+            <div key={it.title} className="p-5 bg-white/3 rounded-xl hover:scale-[1.02] focus-within:ring-2 focus-within:ring-purple-500 transition" role="region" aria-labelledby={`feature-${it.title.replace(/\s+/g, '-').toLowerCase()}`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-md bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center text-white">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" strokeWidth="1.5"></path></svg>
                 </div>
                 <div>
-                  <div className="font-semibold">{it.title}</div>
+                  <div className="font-semibold" id={`feature-${it.title.replace(/\s+/g, '-').toLowerCase()}`}>{it.title}</div>
                   <div className="text-gray-300 text-sm">{it.desc}</div>
                   {it.title === 'AI arbitrage' && (
                     <div className="mt-2">
@@ -123,11 +123,13 @@ export default function Features() {
               </div>
               <div className="mt-4">
                 <button 
-                  className="text-sm px-3 py-2 bg-white/6 rounded"
+                  className="text-sm px-3 py-2 bg-white/6 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                   onClick={() => {
                     if (it.title === 'AI arbitrage') setShowArbitrageLevels(!showArbitrageLevels)
                     if (it.title === 'Binary options') setShowBinaryLevels(!showBinaryLevels)
                   }}
+                  aria-label={`${(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open'} ${it.title} details`}
+                  aria-expanded={(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels)}
                 >
                   {(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open'}
                 </button>

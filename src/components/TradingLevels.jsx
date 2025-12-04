@@ -16,16 +16,16 @@ export default function TradingLevels({ levels, loading, error, feature }) {
   const isBinaryOptions = feature === 'binary_options'
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-4 space-y-2" role="list" aria-label={`${feature.replace('_', ' ')} trading levels`}>
       {levels.map(level => (
-        <div key={level.level} className="p-3 bg-white/2 rounded-lg">
+        <div key={level.level} className="p-3 bg-white/2 rounded-lg" role="listitem">
           <div className="flex justify-between items-center">
             <span className="font-medium">Level {level.level}</span>
             <span className={`text-xs px-2 py-1 rounded ${
               level.riskLevel === 'low' ? 'bg-green-500/20 text-green-400' :
               level.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
               'bg-red-500/20 text-red-400'
-            }`}>
+            }`} aria-label={`Risk level: ${level.riskLevel}`}>
               {level.riskLevel}
             </span>
           </div>

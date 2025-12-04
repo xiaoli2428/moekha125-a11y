@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import TradingLevels from './TradingLevels'
+import CustomerService from './CustomerService'
 
 const items = [
   {
@@ -46,6 +47,7 @@ export default function Features() {
   const [showArbitrageLevels, setShowArbitrageLevels] = useState(false)
   const [showBinaryLevels, setShowBinaryLevels] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCustomerService, setShowCustomerService] = useState(false)
 
   useEffect(() => {
     // Simulate API fetch for AI arbitrage levels
@@ -142,11 +144,12 @@ export default function Features() {
                   onClick={() => {
                     if (it.title === 'AI arbitrage') setShowArbitrageLevels(!showArbitrageLevels)
                     if (it.title === 'Binary options') setShowBinaryLevels(!showBinaryLevels)
+                    if (it.title === 'Customer service') setShowCustomerService(true)
                   }}
                   aria-label={`${(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open'} ${it.title} details`}
                   aria-expanded={(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels)}
                 >
-                  {(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open'}
+                  {it.title === 'Customer service' ? 'Contact Support' : ((it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open')}
                 </button>
               </div>
               {it.title === 'AI arbitrage' && showArbitrageLevels && (
@@ -169,6 +172,10 @@ export default function Features() {
           ))}
         </div>
       </div>
+      <CustomerService 
+        isOpen={showCustomerService} 
+        onClose={() => setShowCustomerService(false)} 
+      />
     </section>
   )
 }

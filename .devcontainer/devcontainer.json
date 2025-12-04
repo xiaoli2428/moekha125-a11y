@@ -10,11 +10,14 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"matthiesen-technology.yaml-with-script"
-			]
+				"christian-kohler.npm-intellisense"
+			],
+			"settings": {
+				"debug.node.autoAttach": "off"
+			}
 		}
 	}
-
+	
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 

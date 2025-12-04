@@ -6,9 +6,9 @@ import Footer from './components/Footer'
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col text-white">
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" role="main">
         <Hero />
         <Features />
       </main>

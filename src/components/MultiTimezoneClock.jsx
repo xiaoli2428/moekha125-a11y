@@ -12,51 +12,66 @@ const DEFAULT_HOUR12_KEY = 'multiClock:hour12';
  * Normalize a stored payload to the new format with timestamps and tombstones.
  * Handles legacy array format and migrates to the normalized payload.
  * @param {any} data - Raw data from localStorage
- * @returns {{zones: Array<{zone: string, addedAt: number, removed?: boolean}>, hour12: boolean, updatedAt: number}}
+ * @returns {{items: Array<{tz: string, ts: number, deleted?: boolean}>, hour12: {value: boolean, ts: number}, ts: number}}
  */
 function normalizePayload(data) {
   const now = Date.now();
   
   // If data is null/undefined, return empty state
   if (data == null) {
-    return { zones: [], hour12: true, updatedAt: now };
+    return { items: [], hour12: { value: true, ts: now }, ts: now };
   }
   
   // Legacy format: plain array of zone strings
   if (Array.isArray(data)) {
     return {
-      zones: data.map((zone, idx) => ({
-        zone,
-        addedAt: now - (data.length - idx), // Preserve order by staggering timestamps
-        removed: false
+      items: data.map((tz, idx) => ({
+        tz,
+        ts: now - (data.length - idx), // Preserve order by staggering timestamps
+        deleted: false
       })),
-      hour12: true,
-      updatedAt: now
+      hour12: { value: true, ts: now },
+      ts: now
     };
   }
   
-  // Already normalized format
+  // Already normalized format (check for items array)
+  if (typeof data === 'object' && Array.isArray(data.items)) {
+    return {
+      items: data.items.map(item => ({
+        tz: item.tz || item.zone || item,
+        ts: item.ts || item.addedAt || now,
+        deleted: item.deleted || item.removed || false
+      })),
+      hour12: data.hour12 && typeof data.hour12 === 'object' 
+        ? data.hour12 
+        : { value: data.hour12 !== undefined ? Boolean(data.hour12) : true, ts: now },
+      ts: data.ts || data.updatedAt || now
+    };
+  }
+  
+  // Legacy object format with zones array
   if (typeof data === 'object' && Array.isArray(data.zones)) {
     return {
-      zones: data.zones.map(item => ({
-        zone: item.zone || item,
-        addedAt: item.addedAt || now,
-        removed: item.removed || false
+      items: data.zones.map(item => ({
+        tz: typeof item === 'string' ? item : (item.zone || item.tz),
+        ts: item.addedAt || item.ts || now,
+        deleted: item.removed || item.deleted || false
       })),
-      hour12: data.hour12 !== undefined ? data.hour12 : true,
-      updatedAt: data.updatedAt || now
+      hour12: { value: data.hour12 !== undefined ? Boolean(data.hour12) : true, ts: now },
+      ts: data.updatedAt || data.ts || now
     };
   }
   
   // Unknown format, return empty
-  return { zones: [], hour12: true, updatedAt: now };
+  return { items: [], hour12: { value: true, ts: now }, ts: now };
 }
 
 /**
  * Load state from localStorage
  * @param {string} zonesKey
  * @param {string} hour12Key
- * @returns {{zones: Array, hour12: boolean, updatedAt: number}}
+ * @returns {{items: Array, hour12: {value: boolean, ts: number}, ts: number}}
  */
 function loadFromStorage(zonesKey, hour12Key) {
   try {
@@ -72,12 +87,12 @@ function loadFromStorage(zonesKey, hour12Key) {
     
     // Override hour12 if separately stored (legacy support)
     if (hour12Data !== null) {
-      normalized.hour12 = hour12Data === 'true';
+      normalized.hour12 = { value: hour12Data === 'true', ts: Date.now() };
     }
     
     return normalized;
   } catch {
-    return { zones: [], hour12: true, updatedAt: Date.now() };
+    return { items: [], hour12: { value: true, ts: Date.now() }, ts: Date.now() };
   }
 }
 
@@ -85,12 +100,12 @@ function loadFromStorage(zonesKey, hour12Key) {
  * Save state to localStorage
  * @param {string} zonesKey
  * @param {string} hour12Key
- * @param {{zones: Array, hour12: boolean, updatedAt: number}} state
+ * @param {{items: Array, hour12: {value: boolean, ts: number}, ts: number}} state
  */
 function saveToStorage(zonesKey, hour12Key, state) {
   try {
     localStorage.setItem(zonesKey, JSON.stringify(state));
-    localStorage.setItem(hour12Key, String(state.hour12));
+    localStorage.setItem(hour12Key, String(state.hour12.value));
   } catch {
     // Storage quota exceeded or not available
   }
@@ -109,76 +124,76 @@ const resolveConflict = {
    * Merge zones from both, keeping all unique zones
    */
   merge: (local, remote) => {
-    const allZones = new Map();
+    const allItems = new Map();
     
-    // Add local zones
-    for (const item of local.zones) {
-      allZones.set(item.zone, { ...item });
+    // Add local items
+    for (const item of local.items) {
+      allItems.set(item.tz, { ...item });
     }
     
-    // Add remote zones (overwrite if exists)
-    for (const item of remote.zones) {
-      const existing = allZones.get(item.zone);
-      if (!existing || item.addedAt > existing.addedAt) {
-        allZones.set(item.zone, { ...item });
+    // Add remote items (overwrite if newer)
+    for (const item of remote.items) {
+      const existing = allItems.get(item.tz);
+      if (!existing || item.ts > existing.ts) {
+        allItems.set(item.tz, { ...item });
       }
     }
     
-    // Sort by addedAt descending (recent first)
-    const zones = Array.from(allZones.values())
-      .filter(z => !z.removed)
-      .sort((a, b) => b.addedAt - a.addedAt);
+    // Sort by ts descending (recent first), filter out deleted
+    const items = Array.from(allItems.values())
+      .filter(z => !z.deleted)
+      .sort((a, b) => b.ts - a.ts);
     
     return {
-      zones,
-      hour12: remote.hour12,
-      updatedAt: Math.max(local.updatedAt, remote.updatedAt)
+      items,
+      hour12: remote.hour12.ts > local.hour12.ts ? remote.hour12 : local.hour12,
+      ts: Math.max(local.ts, remote.ts)
     };
   },
   
   /**
-   * Last-write-wins: use the payload with the more recent updatedAt
+   * Last-write-wins: use the payload with the more recent ts
    */
   lww: (local, remote) => {
-    return remote.updatedAt > local.updatedAt ? remote : local;
+    return remote.ts > local.ts ? remote : local;
   },
   
   /**
-   * Per-item: resolve each zone individually by its addedAt timestamp
+   * Per-item: resolve each zone individually by its ts
    */
   'per-item': (local, remote) => {
-    const allZones = new Map();
+    const allItems = new Map();
     
-    // Add all local zones
-    for (const item of local.zones) {
-      allZones.set(item.zone, { ...item });
+    // Add all local items
+    for (const item of local.items) {
+      allItems.set(item.tz, { ...item });
     }
     
-    // Merge remote zones per-item
-    for (const item of remote.zones) {
-      const existing = allZones.get(item.zone);
+    // Merge remote items per-item
+    for (const item of remote.items) {
+      const existing = allItems.get(item.tz);
       if (!existing) {
-        allZones.set(item.zone, { ...item });
+        allItems.set(item.tz, { ...item });
       } else {
-        // Per-item: use the one with later addedAt, respect tombstones
-        if (item.addedAt > existing.addedAt) {
-          allZones.set(item.zone, { ...item });
-        } else if (item.addedAt === existing.addedAt && item.removed && !existing.removed) {
+        // Per-item: use the one with later ts, respect tombstones
+        if (item.ts > existing.ts) {
+          allItems.set(item.tz, { ...item });
+        } else if (item.ts === existing.ts && item.deleted && !existing.deleted) {
           // Same timestamp but remote has tombstone
-          allZones.set(item.zone, { ...item });
+          allItems.set(item.tz, { ...item });
         }
       }
     }
     
-    // Filter out removed, sort recent-first
-    const zones = Array.from(allZones.values())
-      .filter(z => !z.removed)
-      .sort((a, b) => b.addedAt - a.addedAt);
+    // Filter out deleted, sort recent-first
+    const items = Array.from(allItems.values())
+      .filter(z => !z.deleted)
+      .sort((a, b) => b.ts - a.ts);
     
     return {
-      zones,
-      hour12: remote.updatedAt > local.updatedAt ? remote.hour12 : local.hour12,
-      updatedAt: Math.max(local.updatedAt, remote.updatedAt)
+      items,
+      hour12: remote.hour12.ts > local.hour12.ts ? remote.hour12 : local.hour12,
+      ts: Math.max(local.ts, remote.ts)
     };
   }
 };
@@ -210,7 +225,7 @@ export default function MultiTimezoneClock({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [toasts, setToasts] = useState([]);
+  const [toast, setToast] = useState(null);
   const [showImportExport, setShowImportExport] = useState(false);
   const [importText, setImportText] = useState('');
   
@@ -222,22 +237,19 @@ export default function MultiTimezoneClock({
     const query = searchQuery.toLowerCase();
     return availableTimezones.filter(tz => 
       tz.toLowerCase().includes(query) &&
-      !state.zones.some(z => z.zone === tz && !z.removed)
+      !state.items.some(z => z.tz === tz && !z.deleted)
     );
-  }, [searchQuery, availableTimezones, state.zones]);
+  }, [searchQuery, availableTimezones, state.items]);
   
-  // Active (non-removed) zones
-  const activeZones = useMemo(() => {
-    return state.zones.filter(z => !z.removed);
-  }, [state.zones]);
+  // Active (non-deleted) items
+  const activeItems = useMemo(() => {
+    return state.items.filter(z => !z.deleted);
+  }, [state.items]);
   
   // Show toast notification
-  const showToast = useCallback((message, type = 'info') => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3000);
+  const showToast = useCallback((message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
   }, []);
   
   // Save to storage when state changes
@@ -265,13 +277,13 @@ export default function MultiTimezoneClock({
             const resolver = resolveConflict[syncStrategy] || resolveConflict['per-item'];
             const resolved = resolver(currentState, remote);
             
-            // Show toast if zones changed
-            const localZoneSet = new Set(currentState.zones.filter(z => !z.removed).map(z => z.zone));
-            const resolvedZoneSet = new Set(resolved.zones.map(z => z.zone));
+            // Show toast if items changed
+            const localTzSet = new Set(currentState.items.filter(z => !z.deleted).map(z => z.tz));
+            const resolvedTzSet = new Set(resolved.items.map(z => z.tz));
             
-            if (localZoneSet.size !== resolvedZoneSet.size || 
-                ![...localZoneSet].every(z => resolvedZoneSet.has(z))) {
-              showToast('Clocks synced from another tab', 'info');
+            if (localTzSet.size !== resolvedTzSet.size || 
+                ![...localTzSet].every(z => resolvedTzSet.has(z))) {
+              showToast('Synced from another tab');
             }
             
             return resolved;
@@ -284,9 +296,9 @@ export default function MultiTimezoneClock({
       if (event.key === hour12Key && event.newValue !== null) {
         const newHour12 = event.newValue === 'true';
         setState(prev => {
-          if (prev.hour12 !== newHour12) {
-            showToast('Time format synced from another tab', 'info');
-            return { ...prev, hour12: newHour12, updatedAt: Date.now() };
+          if (prev.hour12.value !== newHour12) {
+            showToast('Synced from another tab');
+            return { ...prev, hour12: { value: newHour12, ts: Date.now() }, ts: Date.now() };
           }
           return prev;
         });
@@ -310,27 +322,27 @@ export default function MultiTimezoneClock({
   }, []);
   
   // Add a timezone
-  const addTimezone = useCallback((zone) => {
+  const addTimezone = useCallback((tz) => {
     const now = Date.now();
     setState(prev => {
       // Check if already exists
-      const existingIdx = prev.zones.findIndex(z => z.zone === zone);
+      const existingIdx = prev.items.findIndex(z => z.tz === tz);
       
       if (existingIdx >= 0) {
-        // Re-add if it was removed
-        if (prev.zones[existingIdx].removed) {
-          const newZones = [...prev.zones];
-          newZones[existingIdx] = { zone, addedAt: now, removed: false };
+        // Re-add if it was deleted
+        if (prev.items[existingIdx].deleted) {
+          const newItems = [...prev.items];
+          newItems[existingIdx] = { tz, ts: now, deleted: false };
           // Sort recent-first
-          newZones.sort((a, b) => b.addedAt - a.addedAt);
-          return { ...prev, zones: newZones, updatedAt: now };
+          newItems.sort((a, b) => b.ts - a.ts);
+          return { ...prev, items: newItems, ts: now };
         }
-        return prev; // Already exists and not removed
+        return prev; // Already exists and not deleted
       }
       
-      // Add new zone at the beginning (recent-first)
-      const newZones = [{ zone, addedAt: now, removed: false }, ...prev.zones];
-      return { ...prev, zones: newZones, updatedAt: now };
+      // Add new item at the beginning (recent-first)
+      const newItems = [{ tz, ts: now, deleted: false }, ...prev.items];
+      return { ...prev, items: newItems, ts: now };
     });
     
     setSearchQuery('');
@@ -338,33 +350,34 @@ export default function MultiTimezoneClock({
   }, []);
   
   // Remove a timezone (soft delete with tombstone)
-  const removeTimezone = useCallback((zone) => {
+  const removeTimezone = useCallback((tz) => {
     const now = Date.now();
     setState(prev => {
-      const newZones = prev.zones.map(z => 
-        z.zone === zone ? { ...z, removed: true, addedAt: now } : z
+      const newItems = prev.items.map(z => 
+        z.tz === tz ? { ...z, deleted: true, ts: now } : z
       );
-      return { ...prev, zones: newZones, updatedAt: now };
+      return { ...prev, items: newItems, ts: now };
     });
   }, []);
   
   // Toggle 12/24 hour format
   const toggleHour12 = useCallback(() => {
+    const now = Date.now();
     setState(prev => ({
       ...prev,
-      hour12: !prev.hour12,
-      updatedAt: Date.now()
+      hour12: { value: !prev.hour12.value, ts: now },
+      ts: now
     }));
   }, []);
   
   // Export configuration
   const exportConfig = useCallback(() => {
     const exportData = {
-      zones: activeZones.map(z => z.zone),
-      hour12: state.hour12
+      zones: activeItems.map(z => z.tz),
+      hour12: state.hour12.value
     };
     return JSON.stringify(exportData, null, 2);
-  }, [activeZones, state.hour12]);
+  }, [activeItems, state.hour12.value]);
   
   // Import configuration
   const importConfig = useCallback((jsonStr) => {
@@ -372,49 +385,49 @@ export default function MultiTimezoneClock({
       const data = JSON.parse(jsonStr);
       const now = Date.now();
       
-      let zones = [];
+      let items = [];
       if (Array.isArray(data)) {
         // Plain array of zones
-        zones = data.map((zone, idx) => ({
-          zone,
-          addedAt: now - (data.length - idx),
-          removed: false
+        items = data.map((tz, idx) => ({
+          tz,
+          ts: now - (data.length - idx),
+          deleted: false
         }));
       } else if (data.zones && Array.isArray(data.zones)) {
         // Object with zones array
-        zones = data.zones.map((zone, idx) => ({
-          zone: typeof zone === 'string' ? zone : zone.zone,
-          addedAt: now - (data.zones.length - idx),
-          removed: false
+        items = data.zones.map((tz, idx) => ({
+          tz: typeof tz === 'string' ? tz : tz.tz,
+          ts: now - (data.zones.length - idx),
+          deleted: false
         }));
       }
       
       // Validate timezones
-      zones = zones.filter(z => {
+      items = items.filter(z => {
         try {
-          new Intl.DateTimeFormat(locale, { timeZone: z.zone });
+          new Intl.DateTimeFormat(locale, { timeZone: z.tz });
           return true;
         } catch {
           return false;
         }
       });
       
-      if (zones.length === 0) {
-        showToast('No valid timezones found in import', 'error');
+      if (items.length === 0) {
+        showToast('No valid timezones found');
         return;
       }
       
       setState({
-        zones,
-        hour12: data.hour12 !== undefined ? data.hour12 : true,
-        updatedAt: now
+        items,
+        hour12: { value: data.hour12 !== undefined ? data.hour12 : true, ts: now },
+        ts: now
       });
       
-      showToast(`Imported ${zones.length} timezone(s)`, 'success');
+      showToast(`Imported ${items.length} timezone(s)`);
       setImportText('');
       setShowImportExport(false);
     } catch {
-      showToast('Invalid JSON format', 'error');
+      showToast('Invalid JSON format');
     }
   }, [locale, showToast]);
   
@@ -425,7 +438,7 @@ export default function MultiTimezoneClock({
       hour: 'numeric',
       minute: '2-digit',
       second: '2-digit',
-      hour12: state.hour12,
+      hour12: state.hour12.value,
       ...timeOptions
     };
     
@@ -434,7 +447,7 @@ export default function MultiTimezoneClock({
     } catch {
       return '--:--:--';
     }
-  }, [locale, state.hour12, timeOptions]);
+  }, [locale, state.hour12.value, timeOptions]);
   
   // Format date for a timezone
   const formatDate = useCallback((date, timeZone) => {
@@ -471,15 +484,22 @@ export default function MultiTimezoneClock({
   };
   
   return (
-    <div className="multi-timezone-clock" role="region" aria-label="Multi-timezone clock">
-      {/* Search and Add */}
-      <div className="multi-timezone-clock__header">
-        <div className="multi-timezone-clock__dropdown" ref={dropdownRef}>
+    <div className="multi-clock" role="region" aria-label="Multi-timezone clock">
+      {/* Toast */}
+      {toast && (
+        <div className="toast" role="status" aria-live="polite">
+          <span className="dot"></span>
+          {toast}
+        </div>
+      )}
+      
+      {/* Toolbar */}
+      <div className="toolbar">
+        <div ref={dropdownRef} style={{ position: 'relative', flex: '1 1 200px' }}>
           <input
             ref={searchInputRef}
             type="text"
-            className="multi-timezone-clock__search"
-            placeholder="Search and add timezone..."
+            placeholder="Search timezone..."
             value={searchQuery}
             onChange={handleSearchChange}
             onFocus={() => setIsDropdownOpen(true)}
@@ -493,19 +513,38 @@ export default function MultiTimezoneClock({
           {isDropdownOpen && filteredTimezones.length > 0 && (
             <ul
               id="timezone-listbox"
-              className="multi-timezone-clock__dropdown-list"
               role="listbox"
               aria-label="Available timezones"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                background: 'var(--card)',
+                border: '1px solid rgba(255,255,255,0.04)',
+                borderRadius: '8px',
+                listStyle: 'none',
+                margin: 0,
+                padding: 0,
+                zIndex: 100
+              }}
             >
               {filteredTimezones.slice(0, 20).map(tz => (
                 <li
                   key={tz}
-                  className="multi-timezone-clock__dropdown-item"
                   role="option"
                   aria-selected={false}
                   onClick={() => addTimezone(tz)}
                   onKeyDown={(e) => e.key === 'Enter' && addTimezone(tz)}
                   tabIndex={0}
+                  style={{
+                    padding: '8px 10px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: 'var(--muted)'
+                  }}
                 >
                   {tz}
                 </li>
@@ -513,124 +552,94 @@ export default function MultiTimezoneClock({
             </ul>
           )}
         </div>
-      </div>
-      
-      {/* Controls */}
-      <div className="multi-timezone-clock__controls">
-        <label className="multi-timezone-clock__toggle">
-          <input
-            type="checkbox"
-            checked={state.hour12}
-            onChange={toggleHour12}
-            aria-describedby="hour12-desc"
-          />
-          <span id="hour12-desc">12-hour format</span>
-        </label>
         
-        <button
-          type="button"
-          className="multi-timezone-clock__btn"
-          onClick={() => setShowImportExport(!showImportExport)}
-          aria-expanded={showImportExport}
-        >
-          Import/Export
+        <button onClick={toggleHour12} aria-pressed={state.hour12.value}>
+          {state.hour12.value ? '12h' : '24h'}
+        </button>
+        
+        <button onClick={() => setShowImportExport(!showImportExport)} aria-expanded={showImportExport}>
+          {showImportExport ? 'Close' : 'Import/Export'}
         </button>
       </div>
       
       {/* Import/Export Panel */}
       {showImportExport && (
-        <div className="multi-timezone-clock__import-export" role="region" aria-label="Import and export settings">
-          <h3>Export</h3>
+        <div style={{ marginBottom: '12px' }}>
           <textarea
-            className="multi-timezone-clock__textarea"
-            readOnly
-            value={exportConfig()}
-            aria-label="Export configuration JSON"
+            placeholder="Paste JSON to import or copy export below"
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            style={{
+              width: '100%',
+              minHeight: '80px',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.04)',
+              color: 'var(--muted)',
+              padding: '8px',
+              borderRadius: '8px',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              resize: 'vertical'
+            }}
+            aria-label="Import/Export JSON"
           />
-          <button
-            type="button"
-            className="multi-timezone-clock__btn multi-timezone-clock__btn--small"
-            onClick={async () => {
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button className="primary" onClick={() => importConfig(importText)} disabled={!importText.trim()}>
+              Import
+            </button>
+            <button onClick={async () => {
               try {
                 if (navigator.clipboard?.writeText) {
                   await navigator.clipboard.writeText(exportConfig());
-                  showToast('Copied to clipboard', 'success');
-                } else {
-                  showToast('Clipboard not supported', 'error');
+                  showToast('Copied to clipboard');
                 }
               } catch {
-                showToast('Failed to copy to clipboard', 'error');
+                showToast('Failed to copy');
               }
-            }}
-          >
-            Copy to Clipboard
-          </button>
-          
-          <h3 style={{ marginTop: '1rem' }}>Import</h3>
-          <textarea
-            className="multi-timezone-clock__textarea"
-            value={importText}
-            onChange={(e) => setImportText(e.target.value)}
-            placeholder='Paste JSON here, e.g.: ["America/New_York", "Europe/London"]'
-            aria-label="Import configuration JSON"
-          />
-          <button
-            type="button"
-            className="multi-timezone-clock__btn multi-timezone-clock__btn--primary multi-timezone-clock__btn--small"
-            onClick={() => importConfig(importText)}
-            disabled={!importText.trim()}
-          >
-            Import
-          </button>
+            }}>
+              Copy Export
+            </button>
+          </div>
         </div>
       )}
       
       {/* Clock Grid */}
-      {activeZones.length === 0 ? (
-        <div className="multi-timezone-clock__empty" role="status">
-          <p>No clocks added yet. Search for a timezone above to add one.</p>
+      {activeItems.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--muted)' }} role="status">
+          No clocks added. Search for a timezone above.
         </div>
       ) : (
-        <div className="multi-timezone-clock__grid" role="list" aria-label="Timezone clocks">
-          {activeZones.map(({ zone, addedAt }) => (
+        <div className="zones" role="list" aria-label="Timezone clocks">
+          {activeItems.map(({ tz, ts }) => (
             <div
-              key={`${zone}-${addedAt}`}
-              className="multi-timezone-clock__card"
+              key={`${tz}-${ts}`}
+              className="zone"
               role="listitem"
-              aria-label={`Clock for ${zone}`}
+              aria-label={`Clock for ${tz}`}
             >
-              <div className="multi-timezone-clock__card-header">
-                <span className="multi-timezone-clock__zone-name">{zone}</span>
+              <div className="tz">
+                <span className="name">{tz}</span>
                 <button
-                  type="button"
-                  className="multi-timezone-clock__remove-btn"
-                  onClick={() => removeTimezone(zone)}
-                  aria-label={`Remove ${zone} clock`}
-                  title="Remove clock"
+                  onClick={() => removeTimezone(tz)}
+                  aria-label={`Remove ${tz}`}
+                  title="Remove"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
                 >
                   ×
                 </button>
               </div>
-              <div className="multi-timezone-clock__time" aria-live="polite" aria-atomic="true">
-                {formatTime(currentTime, zone)}
+              <div className="time" aria-live="polite" aria-atomic="true">
+                {formatTime(currentTime, tz)}
               </div>
-              <div className="multi-timezone-clock__date">
-                {formatDate(currentTime, zone)}
+              <div className="date">
+                {formatDate(currentTime, tz)}
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Toast Container */}
-      {toasts.length > 0 && (
-        <div className="multi-timezone-clock__toast-container" role="status" aria-live="polite">
-          {toasts.map(toast => (
-            <div
-              key={toast.id}
-              className={`multi-timezone-clock__toast multi-timezone-clock__toast--${toast.type}`}
-            >
-              {toast.message}
             </div>
           ))}
         </div>

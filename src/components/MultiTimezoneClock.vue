@@ -1,13 +1,18 @@
 <template>
-  <div class="multi-timezone-clock" role="region" aria-label="Multi-timezone clock">
-    <!-- Search and Add -->
-    <div class="multi-timezone-clock__header">
-      <div class="multi-timezone-clock__dropdown" ref="dropdownRef">
+  <div class="multi-clock" role="region" aria-label="Multi-timezone clock">
+    <!-- Toast -->
+    <div v-if="toast" class="toast" role="status" aria-live="polite">
+      <span class="dot"></span>
+      {{ toast }}
+    </div>
+    
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div ref="dropdownRef" :style="{ position: 'relative', flex: '1 1 200px' }">
         <input
           ref="searchInputRef"
           type="text"
-          class="multi-timezone-clock__search"
-          placeholder="Search and add timezone..."
+          placeholder="Search timezone..."
           :value="searchQuery"
           @input="handleSearchChange"
           @focus="isDropdownOpen = true"
@@ -21,134 +26,118 @@
         <ul
           v-if="isDropdownOpen && filteredTimezones.length > 0"
           id="timezone-listbox"
-          class="multi-timezone-clock__dropdown-list"
           role="listbox"
           aria-label="Available timezones"
+          :style="{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            maxHeight: '200px',
+            overflowY: 'auto',
+            background: 'var(--card)',
+            border: '1px solid rgba(255,255,255,0.04)',
+            borderRadius: '8px',
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+            zIndex: 100
+          }"
         >
           <li
             v-for="tz in filteredTimezones.slice(0, 20)"
             :key="tz"
-            class="multi-timezone-clock__dropdown-item"
             role="option"
             :aria-selected="false"
             @click="addTimezone(tz)"
             @keydown.enter="addTimezone(tz)"
             tabindex="0"
+            :style="{
+              padding: '8px 10px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: 'var(--muted)'
+            }"
           >
             {{ tz }}
           </li>
         </ul>
       </div>
-    </div>
-    
-    <!-- Controls -->
-    <div class="multi-timezone-clock__controls">
-      <label class="multi-timezone-clock__toggle">
-        <input
-          type="checkbox"
-          :checked="state.hour12"
-          @change="toggleHour12"
-          aria-describedby="hour12-desc"
-        />
-        <span id="hour12-desc">12-hour format</span>
-      </label>
       
-      <button
-        type="button"
-        class="multi-timezone-clock__btn"
-        @click="showImportExport = !showImportExport"
-        :aria-expanded="showImportExport"
-      >
-        Import/Export
+      <button @click="toggleHour12" :aria-pressed="state.hour12.value">
+        {{ state.hour12.value ? '12h' : '24h' }}
+      </button>
+      
+      <button @click="showImportExport = !showImportExport" :aria-expanded="showImportExport">
+        {{ showImportExport ? 'Close' : 'Import/Export' }}
       </button>
     </div>
     
     <!-- Import/Export Panel -->
-    <div
-      v-if="showImportExport"
-      class="multi-timezone-clock__import-export"
-      role="region"
-      aria-label="Import and export settings"
-    >
-      <h3>Export</h3>
+    <div v-if="showImportExport" :style="{ marginBottom: '12px' }">
       <textarea
-        class="multi-timezone-clock__textarea"
-        readonly
-        :value="exportConfig()"
-        aria-label="Export configuration JSON"
-      ></textarea>
-      <button
-        type="button"
-        class="multi-timezone-clock__btn multi-timezone-clock__btn--small"
-        @click="copyToClipboard"
-      >
-        Copy to Clipboard
-      </button>
-      
-      <h3 style="margin-top: 1rem">Import</h3>
-      <textarea
-        class="multi-timezone-clock__textarea"
+        placeholder="Paste JSON to import or copy export below"
         v-model="importText"
-        placeholder='Paste JSON here, e.g.: ["America/New_York", "Europe/London"]'
-        aria-label="Import configuration JSON"
+        :style="{
+          width: '100%',
+          minHeight: '80px',
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.04)',
+          color: 'var(--muted)',
+          padding: '8px',
+          borderRadius: '8px',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          resize: 'vertical'
+        }"
+        aria-label="Import/Export JSON"
       ></textarea>
-      <button
-        type="button"
-        class="multi-timezone-clock__btn multi-timezone-clock__btn--primary multi-timezone-clock__btn--small"
-        @click="importConfig"
-        :disabled="!importText.trim()"
-      >
-        Import
-      </button>
+      <div :style="{ display: 'flex', gap: '8px', marginTop: '8px' }">
+        <button class="primary" @click="importConfig" :disabled="!importText.trim()">
+          Import
+        </button>
+        <button @click="copyToClipboard">
+          Copy Export
+        </button>
+      </div>
     </div>
     
     <!-- Clock Grid -->
-    <div v-if="activeZones.length === 0" class="multi-timezone-clock__empty" role="status">
-      <p>No clocks added yet. Search for a timezone above to add one.</p>
+    <div v-if="activeItems.length === 0" :style="{ textAlign: 'center', padding: '24px', color: 'var(--muted)' }" role="status">
+      No clocks added. Search for a timezone above.
     </div>
     
-    <div v-else class="multi-timezone-clock__grid" role="list" aria-label="Timezone clocks">
+    <div v-else class="zones" role="list" aria-label="Timezone clocks">
       <div
-        v-for="{ zone, addedAt } in activeZones"
-        :key="`${zone}-${addedAt}`"
-        class="multi-timezone-clock__card"
+        v-for="{ tz, ts } in activeItems"
+        :key="`${tz}-${ts}`"
+        class="zone"
         role="listitem"
-        :aria-label="`Clock for ${zone}`"
+        :aria-label="`Clock for ${tz}`"
       >
-        <div class="multi-timezone-clock__card-header">
-          <span class="multi-timezone-clock__zone-name">{{ zone }}</span>
+        <div class="tz">
+          <span class="name">{{ tz }}</span>
           <button
-            type="button"
-            class="multi-timezone-clock__remove-btn"
-            @click="removeTimezone(zone)"
-            :aria-label="`Remove ${zone} clock`"
-            title="Remove clock"
+            @click="removeTimezone(tz)"
+            :aria-label="`Remove ${tz}`"
+            title="Remove"
+            :style="{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--muted)',
+              cursor: 'pointer',
+              padding: '4px'
+            }"
           >
             ×
           </button>
         </div>
-        <div class="multi-timezone-clock__time" aria-live="polite" aria-atomic="true">
-          {{ formatTime(currentTime, zone) }}
+        <div class="time" aria-live="polite" aria-atomic="true">
+          {{ formatTime(currentTime, tz) }}
         </div>
-        <div class="multi-timezone-clock__date">
-          {{ formatDate(currentTime, zone) }}
+        <div class="date">
+          {{ formatDate(currentTime, tz) }}
         </div>
-      </div>
-    </div>
-    
-    <!-- Toast Container -->
-    <div
-      v-if="toasts.length > 0"
-      class="multi-timezone-clock__toast-container"
-      role="status"
-      aria-live="polite"
-    >
-      <div
-        v-for="toast in toasts"
-        :key="toast.id"
-        :class="['multi-timezone-clock__toast', `multi-timezone-clock__toast--${toast.type}`]"
-      >
-        {{ toast.message }}
       </div>
     </div>
   </div>
@@ -159,60 +148,69 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import { TIMEZONES } from '../timezones.js';
 
 /**
- * Default localStorage keys
- */
-const DEFAULT_ZONES_KEY = 'multiClock:zones';
-const DEFAULT_HOUR12_KEY = 'multiClock:hour12';
-
-/**
  * Normalize a stored payload to the new format with timestamps and tombstones.
  * Handles legacy array format and migrates to the normalized payload.
  * @param {any} data - Raw data from localStorage
- * @returns {{zones: Array<{zone: string, addedAt: number, removed?: boolean}>, hour12: boolean, updatedAt: number}}
+ * @returns {{items: Array<{tz: string, ts: number, deleted?: boolean}>, hour12: {value: boolean, ts: number}, ts: number}}
  */
 function normalizePayload(data) {
   const now = Date.now();
   
   // If data is null/undefined, return empty state
   if (data == null) {
-    return { zones: [], hour12: true, updatedAt: now };
+    return { items: [], hour12: { value: true, ts: now }, ts: now };
   }
   
   // Legacy format: plain array of zone strings
   if (Array.isArray(data)) {
     return {
-      zones: data.map((zone, idx) => ({
-        zone,
-        addedAt: now - (data.length - idx), // Preserve order by staggering timestamps
-        removed: false
+      items: data.map((tz, idx) => ({
+        tz,
+        ts: now - (data.length - idx), // Preserve order by staggering timestamps
+        deleted: false
       })),
-      hour12: true,
-      updatedAt: now
+      hour12: { value: true, ts: now },
+      ts: now
     };
   }
   
-  // Already normalized format
+  // Already normalized format (check for items array)
+  if (typeof data === 'object' && Array.isArray(data.items)) {
+    return {
+      items: data.items.map(item => ({
+        tz: item.tz || item.zone || item,
+        ts: item.ts || item.addedAt || now,
+        deleted: item.deleted || item.removed || false
+      })),
+      hour12: data.hour12 && typeof data.hour12 === 'object' 
+        ? data.hour12 
+        : { value: data.hour12 !== undefined ? Boolean(data.hour12) : true, ts: now },
+      ts: data.ts || data.updatedAt || now
+    };
+  }
+  
+  // Legacy object format with zones array
   if (typeof data === 'object' && Array.isArray(data.zones)) {
     return {
-      zones: data.zones.map(item => ({
-        zone: item.zone || item,
-        addedAt: item.addedAt || now,
-        removed: item.removed || false
+      items: data.zones.map(item => ({
+        tz: typeof item === 'string' ? item : (item.zone || item.tz),
+        ts: item.addedAt || item.ts || now,
+        deleted: item.removed || item.deleted || false
       })),
-      hour12: data.hour12 !== undefined ? data.hour12 : true,
-      updatedAt: data.updatedAt || now
+      hour12: { value: data.hour12 !== undefined ? Boolean(data.hour12) : true, ts: now },
+      ts: data.updatedAt || data.ts || now
     };
   }
   
   // Unknown format, return empty
-  return { zones: [], hour12: true, updatedAt: now };
+  return { items: [], hour12: { value: true, ts: now }, ts: now };
 }
 
 /**
  * Load state from localStorage
  * @param {string} zonesKey
  * @param {string} hour12Key
- * @returns {{zones: Array, hour12: boolean, updatedAt: number}}
+ * @returns {{items: Array, hour12: {value: boolean, ts: number}, ts: number}}
  */
 function loadFromStorage(zonesKey, hour12Key) {
   try {
@@ -228,12 +226,12 @@ function loadFromStorage(zonesKey, hour12Key) {
     
     // Override hour12 if separately stored (legacy support)
     if (hour12Data !== null) {
-      normalized.hour12 = hour12Data === 'true';
+      normalized.hour12 = { value: hour12Data === 'true', ts: Date.now() };
     }
     
     return normalized;
   } catch {
-    return { zones: [], hour12: true, updatedAt: Date.now() };
+    return { items: [], hour12: { value: true, ts: Date.now() }, ts: Date.now() };
   }
 }
 
@@ -241,12 +239,12 @@ function loadFromStorage(zonesKey, hour12Key) {
  * Save state to localStorage
  * @param {string} zonesKey
  * @param {string} hour12Key
- * @param {{zones: Array, hour12: boolean, updatedAt: number}} state
+ * @param {{items: Array, hour12: {value: boolean, ts: number}, ts: number}} state
  */
 function saveToStorage(zonesKey, hour12Key, state) {
   try {
     localStorage.setItem(zonesKey, JSON.stringify(state));
-    localStorage.setItem(hour12Key, String(state.hour12));
+    localStorage.setItem(hour12Key, String(state.hour12.value));
   } catch {
     // Storage quota exceeded or not available
   }
@@ -265,76 +263,76 @@ const resolveConflict = {
    * Merge zones from both, keeping all unique zones
    */
   merge: (local, remote) => {
-    const allZones = new Map();
+    const allItems = new Map();
     
-    // Add local zones
-    for (const item of local.zones) {
-      allZones.set(item.zone, { ...item });
+    // Add local items
+    for (const item of local.items) {
+      allItems.set(item.tz, { ...item });
     }
     
-    // Add remote zones (overwrite if exists)
-    for (const item of remote.zones) {
-      const existing = allZones.get(item.zone);
-      if (!existing || item.addedAt > existing.addedAt) {
-        allZones.set(item.zone, { ...item });
+    // Add remote items (overwrite if newer)
+    for (const item of remote.items) {
+      const existing = allItems.get(item.tz);
+      if (!existing || item.ts > existing.ts) {
+        allItems.set(item.tz, { ...item });
       }
     }
     
-    // Sort by addedAt descending (recent first)
-    const zones = Array.from(allZones.values())
-      .filter(z => !z.removed)
-      .sort((a, b) => b.addedAt - a.addedAt);
+    // Sort by ts descending (recent first), filter out deleted
+    const items = Array.from(allItems.values())
+      .filter(z => !z.deleted)
+      .sort((a, b) => b.ts - a.ts);
     
     return {
-      zones,
-      hour12: remote.hour12,
-      updatedAt: Math.max(local.updatedAt, remote.updatedAt)
+      items,
+      hour12: remote.hour12.ts > local.hour12.ts ? remote.hour12 : local.hour12,
+      ts: Math.max(local.ts, remote.ts)
     };
   },
   
   /**
-   * Last-write-wins: use the payload with the more recent updatedAt
+   * Last-write-wins: use the payload with the more recent ts
    */
   lww: (local, remote) => {
-    return remote.updatedAt > local.updatedAt ? remote : local;
+    return remote.ts > local.ts ? remote : local;
   },
   
   /**
-   * Per-item: resolve each zone individually by its addedAt timestamp
+   * Per-item: resolve each zone individually by its ts
    */
   'per-item': (local, remote) => {
-    const allZones = new Map();
+    const allItems = new Map();
     
-    // Add all local zones
-    for (const item of local.zones) {
-      allZones.set(item.zone, { ...item });
+    // Add all local items
+    for (const item of local.items) {
+      allItems.set(item.tz, { ...item });
     }
     
-    // Merge remote zones per-item
-    for (const item of remote.zones) {
-      const existing = allZones.get(item.zone);
+    // Merge remote items per-item
+    for (const item of remote.items) {
+      const existing = allItems.get(item.tz);
       if (!existing) {
-        allZones.set(item.zone, { ...item });
+        allItems.set(item.tz, { ...item });
       } else {
-        // Per-item: use the one with later addedAt, respect tombstones
-        if (item.addedAt > existing.addedAt) {
-          allZones.set(item.zone, { ...item });
-        } else if (item.addedAt === existing.addedAt && item.removed && !existing.removed) {
+        // Per-item: use the one with later ts, respect tombstones
+        if (item.ts > existing.ts) {
+          allItems.set(item.tz, { ...item });
+        } else if (item.ts === existing.ts && item.deleted && !existing.deleted) {
           // Same timestamp but remote has tombstone
-          allZones.set(item.zone, { ...item });
+          allItems.set(item.tz, { ...item });
         }
       }
     }
     
-    // Filter out removed, sort recent-first
-    const zones = Array.from(allZones.values())
-      .filter(z => !z.removed)
-      .sort((a, b) => b.addedAt - a.addedAt);
+    // Filter out deleted, sort recent-first
+    const items = Array.from(allItems.values())
+      .filter(z => !z.deleted)
+      .sort((a, b) => b.ts - a.ts);
     
     return {
-      zones,
-      hour12: remote.updatedAt > local.updatedAt ? remote.hour12 : local.hour12,
-      updatedAt: Math.max(local.updatedAt, remote.updatedAt)
+      items,
+      hour12: remote.hour12.ts > local.hour12.ts ? remote.hour12 : local.hour12,
+      ts: Math.max(local.ts, remote.ts)
     };
   }
 };
@@ -397,7 +395,7 @@ export default {
     const currentTime = ref(new Date());
     const searchQuery = ref('');
     const isDropdownOpen = ref(false);
-    const toasts = ref([]);
+    const toast = ref(null);
     const showImportExport = ref(false);
     const importText = ref('');
     
@@ -409,25 +407,19 @@ export default {
       const query = searchQuery.value.toLowerCase();
       return props.availableTimezones.filter(tz => 
         tz.toLowerCase().includes(query) &&
-        !state.zones.some(z => z.zone === tz && !z.removed)
+        !state.items.some(z => z.tz === tz && !z.deleted)
       );
     });
     
-    // Active (non-removed) zones
-    const activeZones = computed(() => {
-      return state.zones.filter(z => !z.removed);
+    // Active (non-deleted) items
+    const activeItems = computed(() => {
+      return state.items.filter(z => !z.deleted);
     });
     
     // Show toast notification
-    const showToast = (message, type = 'info') => {
-      const id = Date.now();
-      toasts.value.push({ id, message, type });
-      setTimeout(() => {
-        const idx = toasts.value.findIndex(t => t.id === id);
-        if (idx >= 0) {
-          toasts.value.splice(idx, 1);
-        }
-      }, 3000);
+    const showToast = (message) => {
+      toast.value = message;
+      setTimeout(() => { toast.value = null; }, 3000);
     };
     
     // Save to storage when state changes
@@ -460,23 +452,23 @@ export default {
           const remoteData = JSON.parse(event.newValue);
           const remote = normalizePayload(remoteData);
           
-          const currentState = { zones: [...state.zones], hour12: state.hour12, updatedAt: state.updatedAt };
+          const currentState = { items: [...state.items], hour12: { ...state.hour12 }, ts: state.ts };
           const resolver = resolveConflict[props.syncStrategy] || resolveConflict['per-item'];
           const resolved = resolver(currentState, remote);
           
-          // Show toast if zones changed
-          const localZoneSet = new Set(currentState.zones.filter(z => !z.removed).map(z => z.zone));
-          const resolvedZoneSet = new Set(resolved.zones.map(z => z.zone));
+          // Show toast if items changed
+          const localTzSet = new Set(currentState.items.filter(z => !z.deleted).map(z => z.tz));
+          const resolvedTzSet = new Set(resolved.items.map(z => z.tz));
           
-          if (localZoneSet.size !== resolvedZoneSet.size || 
-              ![...localZoneSet].every(z => resolvedZoneSet.has(z))) {
-            showToast('Clocks synced from another tab', 'info');
+          if (localTzSet.size !== resolvedTzSet.size || 
+              ![...localTzSet].every(z => resolvedTzSet.has(z))) {
+            showToast('Synced from another tab');
           }
           
           Object.assign(state, {
-            zones: resolved.zones.map(z => ({ ...z })),
-            hour12: resolved.hour12,
-            updatedAt: resolved.updatedAt
+            items: resolved.items.map(z => ({ ...z })),
+            hour12: { ...resolved.hour12 },
+            ts: resolved.ts
           });
         } catch {
           // Invalid JSON, ignore
@@ -485,10 +477,10 @@ export default {
       
       if (event.key === hour12Key.value && event.newValue !== null) {
         const newHour12 = event.newValue === 'true';
-        if (state.hour12 !== newHour12) {
-          showToast('Time format synced from another tab', 'info');
-          state.hour12 = newHour12;
-          state.updatedAt = Date.now();
+        if (state.hour12.value !== newHour12) {
+          showToast('Synced from another tab');
+          state.hour12 = { value: newHour12, ts: Date.now() };
+          state.ts = Date.now();
         }
       }
     };
@@ -517,27 +509,27 @@ export default {
     });
     
     // Add a timezone
-    const addTimezone = (zone) => {
+    const addTimezone = (tz) => {
       const now = Date.now();
       
       // Check if already exists
-      const existingIdx = state.zones.findIndex(z => z.zone === zone);
+      const existingIdx = state.items.findIndex(z => z.tz === tz);
       
       if (existingIdx >= 0) {
-        // Re-add if it was removed
-        if (state.zones[existingIdx].removed) {
-          const newZones = state.zones.map((z, idx) =>
-            idx === existingIdx ? { ...z, zone, addedAt: now, removed: false } : { ...z }
+        // Re-add if it was deleted
+        if (state.items[existingIdx].deleted) {
+          const newItems = state.items.map((z, idx) =>
+            idx === existingIdx ? { ...z, tz, ts: now, deleted: false } : { ...z }
           );
           // Sort recent-first
-          newZones.sort((a, b) => b.addedAt - a.addedAt);
-          state.zones = newZones;
-          state.updatedAt = now;
+          newItems.sort((a, b) => b.ts - a.ts);
+          state.items = newItems;
+          state.ts = now;
         }
       } else {
-        // Add new zone at the beginning (recent-first)
-        state.zones = [{ zone, addedAt: now, removed: false }, ...state.zones.map(z => ({ ...z }))];
-        state.updatedAt = now;
+        // Add new item at the beginning (recent-first)
+        state.items = [{ tz, ts: now, deleted: false }, ...state.items.map(z => ({ ...z }))];
+        state.ts = now;
       }
       
       searchQuery.value = '';
@@ -545,25 +537,26 @@ export default {
     };
     
     // Remove a timezone (soft delete with tombstone)
-    const removeTimezone = (zone) => {
+    const removeTimezone = (tz) => {
       const now = Date.now();
-      state.zones = state.zones.map(z =>
-        z.zone === zone ? { ...z, removed: true, addedAt: now } : { ...z }
+      state.items = state.items.map(z =>
+        z.tz === tz ? { ...z, deleted: true, ts: now } : { ...z }
       );
-      state.updatedAt = now;
+      state.ts = now;
     };
     
     // Toggle 12/24 hour format
     const toggleHour12 = () => {
-      state.hour12 = !state.hour12;
-      state.updatedAt = Date.now();
+      const now = Date.now();
+      state.hour12 = { value: !state.hour12.value, ts: now };
+      state.ts = now;
     };
     
     // Export configuration
     const exportConfig = () => {
       const exportData = {
-        zones: activeZones.value.map(z => z.zone),
-        hour12: state.hour12
+        zones: activeItems.value.map(z => z.tz),
+        hour12: state.hour12.value
       };
       return JSON.stringify(exportData, null, 2);
     };
@@ -573,12 +566,10 @@ export default {
       try {
         if (navigator.clipboard?.writeText) {
           await navigator.clipboard.writeText(exportConfig());
-          showToast('Copied to clipboard', 'success');
-        } else {
-          showToast('Clipboard not supported', 'error');
+          showToast('Copied to clipboard');
         }
       } catch {
-        showToast('Failed to copy to clipboard', 'error');
+        showToast('Failed to copy');
       }
     };
     
@@ -588,47 +579,47 @@ export default {
         const data = JSON.parse(importText.value);
         const now = Date.now();
         
-        let zones = [];
+        let items = [];
         if (Array.isArray(data)) {
           // Plain array of zones
-          zones = data.map((zone, idx) => ({
-            zone,
-            addedAt: now - (data.length - idx),
-            removed: false
+          items = data.map((tz, idx) => ({
+            tz,
+            ts: now - (data.length - idx),
+            deleted: false
           }));
         } else if (data.zones && Array.isArray(data.zones)) {
           // Object with zones array
-          zones = data.zones.map((zone, idx) => ({
-            zone: typeof zone === 'string' ? zone : zone.zone,
-            addedAt: now - (data.zones.length - idx),
-            removed: false
+          items = data.zones.map((tz, idx) => ({
+            tz: typeof tz === 'string' ? tz : tz.tz,
+            ts: now - (data.zones.length - idx),
+            deleted: false
           }));
         }
         
         // Validate timezones
-        zones = zones.filter(z => {
+        items = items.filter(z => {
           try {
-            new Intl.DateTimeFormat(props.locale, { timeZone: z.zone });
+            new Intl.DateTimeFormat(props.locale, { timeZone: z.tz });
             return true;
           } catch {
             return false;
           }
         });
         
-        if (zones.length === 0) {
-          showToast('No valid timezones found in import', 'error');
+        if (items.length === 0) {
+          showToast('No valid timezones found');
           return;
         }
         
-        state.zones = zones;
-        state.hour12 = data.hour12 !== undefined ? data.hour12 : true;
-        state.updatedAt = now;
+        state.items = items;
+        state.hour12 = { value: data.hour12 !== undefined ? data.hour12 : true, ts: now };
+        state.ts = now;
         
-        showToast(`Imported ${zones.length} timezone(s)`, 'success');
+        showToast(`Imported ${items.length} timezone(s)`);
         importText.value = '';
         showImportExport.value = false;
       } catch {
-        showToast('Invalid JSON format', 'error');
+        showToast('Invalid JSON format');
       }
     };
     
@@ -639,7 +630,7 @@ export default {
         hour: 'numeric',
         minute: '2-digit',
         second: '2-digit',
-        hour12: state.hour12,
+        hour12: state.hour12.value,
         ...props.timeOptions
       };
       
@@ -689,13 +680,13 @@ export default {
       currentTime,
       searchQuery,
       isDropdownOpen,
-      toasts,
+      toast,
       showImportExport,
       importText,
       searchInputRef,
       dropdownRef,
       filteredTimezones,
-      activeZones,
+      activeItems,
       addTimezone,
       removeTimezone,
       toggleHour12,

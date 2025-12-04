@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import TradingLevels from './TradingLevels'
 
 const items = [
   {
@@ -106,28 +107,16 @@ export default function Features() {
                   <div className="text-gray-300 text-sm">{it.desc}</div>
                   {it.title === 'AI arbitrage' && (
                     <div className="mt-2">
-                      {loadingArbitrage ? (
-                        <div className="text-xs text-gray-400">Loading levels...</div>
-                      ) : errorArbitrage ? (
-                        <div className="text-xs text-red-400">{errorArbitrage}</div>
-                      ) : (
-                        <div className="text-xs text-green-400">
-                          {arbitrageLevels.length} levels available
-                        </div>
-                      )}
+                      <div className="text-xs text-green-400">
+                        {arbitrageLevels.length} levels available
+                      </div>
                     </div>
                   )}
                   {it.title === 'Binary options' && (
                     <div className="mt-2">
-                      {loadingBinary ? (
-                        <div className="text-xs text-gray-400">Loading levels...</div>
-                      ) : errorBinary ? (
-                        <div className="text-xs text-red-400">{errorBinary}</div>
-                      ) : (
-                        <div className="text-xs text-green-400">
-                          {binaryLevels.length} levels available
-                        </div>
-                      )}
+                      <div className="text-xs text-green-400">
+                        {binaryLevels.length} levels available
+                      </div>
                     </div>
                   )}
                 </div>
@@ -143,47 +132,21 @@ export default function Features() {
                   {(it.title === 'AI arbitrage' && showArbitrageLevels) || (it.title === 'Binary options' && showBinaryLevels) ? 'Close' : 'Open'}
                 </button>
               </div>
-              {it.title === 'AI arbitrage' && showArbitrageLevels && !loadingArbitrage && !errorArbitrage && (
-                <div className="mt-4 space-y-2">
-                  {arbitrageLevels.map(level => (
-                    <div key={level.level} className="p-3 bg-white/2 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Level {level.level}</span>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          level.riskLevel === 'low' ? 'bg-green-500/20 text-green-400' :
-                          level.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
-                          {level.riskLevel}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 mt-1">
-                        {level.profitPercentage}% profit • Min ${level.minCapital} • {level.duration}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {it.title === 'AI arbitrage' && showArbitrageLevels && (
+                <TradingLevels 
+                  levels={arbitrageLevels} 
+                  loading={loadingArbitrage} 
+                  error={errorArbitrage} 
+                  feature="ai_arbitrage" 
+                />
               )}
-              {it.title === 'Binary options' && showBinaryLevels && !loadingBinary && !errorBinary && (
-                <div className="mt-4 space-y-2">
-                  {binaryLevels.map(level => (
-                    <div key={level.level} className="p-3 bg-white/2 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Level {level.level}</span>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          level.riskLevel === 'low' ? 'bg-green-500/20 text-green-400' :
-                          level.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
-                          {level.riskLevel}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 mt-1">
-                        {level.profitPercentage}% payout • Min ${level.minCapital} • {level.duration}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {it.title === 'Binary options' && showBinaryLevels && (
+                <TradingLevels 
+                  levels={binaryLevels} 
+                  loading={loadingBinary} 
+                  error={errorBinary} 
+                  feature="binary_options" 
+                />
               )}
             </div>
           ))}

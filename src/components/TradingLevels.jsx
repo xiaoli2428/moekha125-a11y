@@ -16,9 +16,9 @@ export default function TradingLevels({ levels, loading, error, feature }) {
   const isBinaryOptions = feature === 'binary_options'
 
   return (
-    <div className="mt-4 space-y-2" role="list" aria-label={`${feature.replace('_', ' ')} trading levels`}>
+    <div className="mt-4 space-y-2 transition-all duration-300 ease-in-out" role="list" aria-label={`${feature.replace('_', ' ')} trading levels`}>
       {levels.map(level => (
-        <div key={level.level} className="p-3 bg-white/2 rounded-lg" role="listitem">
+        <div key={level.level} className="p-3 bg-white/2 rounded-lg transition-all duration-300 ease-in-out hover:bg-white/3">
           <div className="flex justify-between items-center">
             <span className="font-medium">Level {level.level}</span>
             <span className={`text-xs px-2 py-1 rounded ${
@@ -32,6 +32,9 @@ export default function TradingLevels({ levels, loading, error, feature }) {
           <div className="text-xs text-gray-300 mt-1">
             {level.profitPercentage}% {isBinaryOptions ? 'payout' : 'profit'} • Min ${level.minCapital} • {level.duration}
           </div>
+          <button className="mt-2 text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-indigo-500 rounded hover:scale-105 transition transform focus:outline-none focus:ring-2 focus:ring-purple-500">
+            Start Trading
+          </button>
         </div>
       ))}
     </div>

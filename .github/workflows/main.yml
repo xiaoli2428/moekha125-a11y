@@ -1,6 +1,5 @@
-name: CI on main
-
-on:
+- name: Set up Node.js
+  uses: actions/setup-node@v4 on:
   push:
     branches: [ "main" ]
   pull_request:

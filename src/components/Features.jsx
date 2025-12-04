@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import TradingLevels from './TradingLevels'
 import CustomerService from './CustomerService'
+import CustomerService from './CustomerService'
 
 const items = [
   {
@@ -47,6 +48,7 @@ export default function Features() {
   const [showArbitrageLevels, setShowArbitrageLevels] = useState(false)
   const [showBinaryLevels, setShowBinaryLevels] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCustomerService, setShowCustomerService] = useState(false)
   const [showCustomerService, setShowCustomerService] = useState(false)
 
   useEffect(() => {

@@ -21,6 +21,14 @@ export default function CustomerService({ isOpen, onClose }) {
     scrollToBottom()
   }, [messages])
 
+  const handleClose = () => {
+    if (messages.length > 1) {
+      const confirmClose = window.confirm('Are you sure you want to close the chat? Your conversation will be saved, but you might miss important updates from our support team.')
+      if (!confirmClose) return
+    }
+    onClose()
+  }
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return
 
@@ -35,40 +43,69 @@ export default function CustomerService({ isOpen, onClose }) {
     setInputMessage('')
     setIsTyping(true)
 
-    // Simulate backend processing and response
-    setTimeout(() => {
-      const botResponse = generateBotResponse(inputMessage)
+    try {
+      // Simulate backend API call
+      const response = await simulateBackendCall(inputMessage)
+      const botResponse = {
+        id: messages.length + 2,
+        type: 'bot',
+        content: response,
+        timestamp: new Date()
+      }
       setMessages(prev => [...prev, botResponse])
+    } catch (error) {
+      const errorResponse = {
+        id: messages.length + 2,
+        type: 'bot',
+        content: 'Sorry, I\'m experiencing technical difficulties. Please try again or contact support@onchainweb.com',
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorResponse])
+    } finally {
       setIsTyping(false)
-    }, 1000 + Math.random() * 2000) // Random delay 1-3 seconds
+    }
   }
 
-  const generateBotResponse = (userInput) => {
-    const input = userInput.toLowerCase()
-    let response = ''
+  const simulateBackendCall = async (message) => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
+
+    // Simulate backend processing - in real app, this would be an API call
+    const input = message.toLowerCase()
+
+    if (input.includes('urgent') || input.includes('emergency')) {
+      return '🚨 URGENT REQUEST DETECTED 🚨\n\nI\'ve flagged this for immediate attention. A human support agent will contact you within 5 minutes. Please stay online.\n\nFor immediate assistance, you can also call our hotline: +1-800-ONCHAIN'
+    }
 
     if (input.includes('arbitrage') || input.includes('ai')) {
-      response = 'For AI arbitrage questions, our automated strategies help maximize profits across multiple trading pairs. Would you like me to explain the risk levels or help you get started?'
-    } else if (input.includes('binary') || input.includes('options')) {
-      response = 'Binary options trading offers fixed payouts with clear timeframes. We have levels from 5 minutes to 15 minutes. Which level interests you?'
-    } else if (input.includes('trade') || input.includes('spot')) {
-      response = 'Spot trading includes instant swaps and limit orders. Our platform supports multiple pairs with competitive fees. Need help placing an order?'
-    } else if (input.includes('wallet') || input.includes('connect')) {
-      response = 'Wallet connection is coming soon! We support MetaMask, WalletConnect, and other popular wallets. Stay tuned for updates.'
-    } else if (input.includes('help') || input.includes('support')) {
-      response = 'I\'m here to help! You can ask about trading features, account setup, or technical issues. What specific assistance do you need?'
-    } else if (input.includes('contact') || input.includes('email')) {
-      response = 'For complex issues, you can reach our support team at support@onchainweb.com. We typically respond within 24 hours.'
-    } else {
-      response = 'Thanks for your message! Our team is here to help with all your DeFi trading needs. Could you please provide more details about what you\'re looking for?'
+      return '🤖 AI Arbitrage Support:\n\nOur AI arbitrage system automatically scans multiple exchanges for price discrepancies. Current success rate: 94.2%\n\nAvailable levels:\n• Low Risk (5.2% profit, 24h duration)\n• Medium Risk (8.5% profit, 12h duration)  \n• High Risk (12.0% profit, 6h duration)\n\nWould you like me to help you start a position?'
     }
 
-    return {
-      id: messages.length + 2,
-      type: 'bot',
-      content: response,
-      timestamp: new Date()
+    if (input.includes('binary') || input.includes('options')) {
+      return '📈 Binary Options Support:\n\nFixed-payout trading with clear timeframes. No margin calls, fixed risk.\n\nAvailable levels:\n• Quick Trade (75% payout, 5min)\n• Standard (85% payout, 10min)\n• Premium (95% payout, 15min)\n\nAll trades are settled automatically. Ready to place a trade?'
     }
+
+    if (input.includes('wallet') || input.includes('connect')) {
+      return '🔗 Wallet Integration:\n\nWe support:\n• MetaMask\n• WalletConnect\n• Coinbase Wallet\n• Trust Wallet\n\nIntegration launching Q1 2026. Join our waitlist for early access!\n\nFor now, you can practice with our simulated trading environment.'
+    }
+
+    if (input.includes('kyc') || input.includes('verification')) {
+      return '🆔 KYC Verification:\n\nRequired for:\n• Withdrawals over $1000\n• Advanced trading features\n• Higher position limits\n\nProcess takes 5-10 minutes. Start verification now?'
+    }
+
+    if (input.includes('deposit') || input.includes('withdraw')) {
+      return '💰 Deposits & Withdrawals:\n\n• Deposits: Instant (crypto)\n• Withdrawals: 1-24 hours\n• Minimum: $10\n• Maximum: $100,000/day\n\nNeed help with a transaction?'
+    }
+
+    // Default responses
+    const defaultResponses = [
+      'Thanks for your question! Our DeFi platform is designed for maximum security and profitability. What specific feature would you like to learn more about?',
+      'I\'m here to help! Onchainweb offers AI-powered trading, binary options, and spot trading. Which interests you most?',
+      'Great question! Our platform uses advanced algorithms to maximize your returns while minimizing risk. Would you like details on any specific trading strategy?',
+      'Thanks for reaching out! We\'re committed to providing 24/7 support. Is there anything specific about our trading features you\'d like to know?'
+    ]
+
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]
   }
 
   const handleKeyPress = (e) => {
@@ -97,7 +134,7 @@ export default function CustomerService({ isOpen, onClose }) {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-white transition"
             aria-label="Close customer service chat"
           >
@@ -139,7 +176,7 @@ export default function CustomerService({ isOpen, onClose }) {
 
         {/* Input */}
         <div className="p-4 border-t border-white/10">
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={inputMessage}
@@ -160,9 +197,20 @@ export default function CustomerService({ isOpen, onClose }) {
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Our support team is here 24/7. For urgent issues, mention "urgent" in your message.
-          </p>
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => {
+                const emailBody = messages.map(m => `${m.type === 'user' ? 'You' : 'Support'}: ${m.content}`).join('\n\n')
+                window.open(`mailto:support@onchainweb.com?subject=Support Chat Transcript&body=${encodeURIComponent(emailBody)}`)
+              }}
+              className="text-xs text-purple-400 hover:text-purple-300 underline"
+            >
+              Escalate to human support
+            </button>
+            <p className="text-xs text-gray-400">
+              24/7 support • Avg response: 2min
+            </p>
+          </div>
         </div>
       </div>
     </div>

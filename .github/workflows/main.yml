@@ -1,102 +1,81 @@
-name: CI on main
+  - id: detect
+    name: Detect package manager / test config
+    run: |
+      set -euo pipefail
+      manager=none
+      lockfile=false
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+      if [ -f package.json ]; then
+        manager=node
+        if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
+          lockfile=true
+        fi
+      elif [ -f requirements.txt ] || ls *.py 1>/dev/null 2>/dev/null; then
+        manager=python
+      fi
 
-permissions:
-  contents: read
+      echo "manager=$manager" >> "$GITHUB_OUTPUT"
+      echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+  - name: Setup Node (with cache)
+    if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
+    uses: actions/setup-node@v4
+    with:
+      node-version: '18'
+      cache: 'npm'
 
-      - id: detect
-        name: Detect package manager / test config
-        run: |
-          set -euo pipefail
-          manager=none
-          lockfile=false
+  - name: Setup Node (no cache)
+    if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
+    uses: actions/setup-node@v4
+    with:
+      node-version: '18'
 
-          if [ -f package.json ]; then
-            manager=node
-            if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
-              lockfile=true
-            fi
-          elif [ -f requirements.txt ] || ls *.py 1>/dev/null 2>/dev/null; then
-            manager=python
-          fi
+  - name: Install and test (npm)
+    if: ${{ steps.detect.outputs.manager == 'node' }}
+    run: |
+      set -euo pipefail
+      if [ "${{ steps.detect.outputs.lockfile }}" = "true" ]; then
+        npm ci
+      else
+        npm install
+      fi
 
-          echo "manager=$manager" >> "$GITHUB_OUTPUT"
-          echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
+      if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
+        echo "npm test script found — running tests"
+        npm test
+      else
+        echo "No npm test script defined; skipping npm test"
+      fi
 
-      - name: Setup Node (with cache)
-        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@5c3f4b4954a18e2eebf54ebb2c1e196d0f1c1aad  # v4.0.2
-        with:
-          node-version: '18'
-          cache: 'npm'
+  - name: Cache pip
+    if: ${{ steps.detect.outputs.manager == 'python' }}
+    uses: actions/cache@v4
+    with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      restore-keys: |
+        ${{ runner.os }}-pip-
 
-      - name: Setup Node (no cache)
-        if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@5c3f4b4954a18e2eebf54ebb2c1e196d0f1c1aad  # v4.0.2
-        with:
-          node-version: '18'
+  - name: Set up Python
+    if: ${{ steps.detect.outputs.manager == 'python' }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.x'
 
-      - name: Install and test (npm)
-        if: ${{ steps.detect.outputs.manager == 'node' }}
-        run: |
-          set -euo pipefail
-          # Deterministic install when lockfile exists
-          if [ "${{ steps.detect.outputs.lockfile }}" = "true" ]; then
-            npm ci
-          else
-            npm install
-          fi
+  - name: Install and test (python)
+    if: ${{ steps.detect.outputs.manager == 'python' }}
+    run: |
+      set -euo pipefail
+      if [ -f requirements.txt ]; then
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+      fi
+      if command -v pytest >/dev/null 2>&1; then
+        pytest -q
+      else
+        echo "pytest not installed; skipping python tests"
+      fi
 
-          # Exit code 0 when test script exists; 1 otherwise
-          if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
-            echo "npm test script found — running tests"
-            npm test
-          else
-            echo "No npm test script defined; skipping npm test"
-          fi
-
-      - name: Cache pip
-        if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/cache@b2aaef7675235c9ab2e2e3980d5bbbb4301008bb  # v4.2.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Set up Python
-        if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/setup-python@e2c1e2cdc50831d2d9bcdbe3c848a8d675c73f18  # v4.7.0
-        with:
-          python-version: '3.x'
-
-      - name: Install and test (python)
-        if: ${{ steps.detect.outputs.manager == 'python' }}
-        run: |
-          set -euo pipefail
-          if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
-            python -m pip install -r requirements.txt
-          fi
-          # Run tests (assumes pytest is used)
-          if command -v pytest >/dev/null 2>&1; then
-            pytest -q
-          else
-            echo "pytest not installed; skipping python tests"
-          fi
-
-      - name: No-op
-        if: ${{ steps.detect.outputs.manager == 'none' }}
-        run: echo "No recognized test config found; ensure you add tests or update CI workflow"
+  - name: No-op
+    if: ${{ steps.detect.outputs.manager == 'none' }}
+    run: echo "No recognized test config found; ensure you add tests or update CI workflow"

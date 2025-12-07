@@ -1,81 +1,26 @@
-  - id: detect
-    name: Detect package manager / test config
-    run: |
-      set -euo pipefail
-      manager=none
-      lockfile=false
+# File to change: .github/workflows/main.yml
 
-      if [ -f package.json ]; then
-        manager=node
-        if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
-          lockfile=true
-        fi
-      elif [ -f requirements.txt ] || ls *.py 1>/dev/null 2>/dev/null; then
-        manager=python
-      fi
+# Find these lines (already correct per current file, but double-check for additional jobs in other workflow files!)
+- uses: actions/setup-node@v4
+- uses: actions/cache@v4
+- uses: actions/setup-python@v4
 
-      echo "manager=$manager" >> "$GITHUB_OUTPUT"
-      echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
+# If you see lines like this anywhere in your workflow YAML:
+# uses: actions/setup-node@<SHA or old version>
+# uses: actions/checkout@<SHA or old version>
+# Replace ALL with the stable tag v4:
+uses: actions/setup-node@v4
+uses: actions/checkout@v4
 
-  - name: Setup Node (with cache)
-    if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-    uses: actions/setup-node@v4
-    with:
-      node-version: '18'
-      cache: 'npm'
+# Also, ensure the correct with block as below for setup-node:
+with:
+  node-version: '18'
+  cache: 'npm'   # only for "with cache" step
 
-  - name: Setup Node (no cache)
-    if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-    uses: actions/setup-node@v4
-    with:
-      node-version: '18'
+# There are currently no checkout steps in your posted YAML.
+# If you need to add checkout (typically before setup-node), insert:
+- name: Checkout
+  uses: actions/checkout@v4
 
-  - name: Install and test (npm)
-    if: ${{ steps.detect.outputs.manager == 'node' }}
-    run: |
-      set -euo pipefail
-      if [ "${{ steps.detect.outputs.lockfile }}" = "true" ]; then
-        npm ci
-      else
-        npm install
-      fi
-
-      if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
-        echo "npm test script found — running tests"
-        npm test
-      else
-        echo "No npm test script defined; skipping npm test"
-      fi
-
-  - name: Cache pip
-    if: ${{ steps.detect.outputs.manager == 'python' }}
-    uses: actions/cache@v4
-    with:
-      path: ~/.cache/pip
-      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-      restore-keys: |
-        ${{ runner.os }}-pip-
-
-  - name: Set up Python
-    if: ${{ steps.detect.outputs.manager == 'python' }}
-    uses: actions/setup-python@v4
-    with:
-      python-version: '3.x'
-
-  - name: Install and test (python)
-    if: ${{ steps.detect.outputs.manager == 'python' }}
-    run: |
-      set -euo pipefail
-      if [ -f requirements.txt ]; then
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
-      fi
-      if command -v pytest >/dev/null 2>&1; then
-        pytest -q
-      else
-        echo "pytest not installed; skipping python tests"
-      fi
-
-  - name: No-op
-    if: ${{ steps.detect.outputs.manager == 'none' }}
-    run: echo "No recognized test config found; ensure you add tests or update CI workflow"
+# Full context for your main workflow already contains correct setup-node syntax.
+# If you have other workflow files (.github/workflows/[other].yml), repeat for those as needed!

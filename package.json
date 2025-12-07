@@ -22,3 +22,14 @@
     "vite": "^6.1.7"
   }
 }
+{
+  "dependencies": {
+    "vue": "^3.4.0"
+    // ... other dependencies ...
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+    // ... other dev dependencies ...
+  }
+}

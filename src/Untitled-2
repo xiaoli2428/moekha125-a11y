@@ -1,0 +1,8 @@
+cd /workspaces/moekha125-a11y
+
+# Delete the problematic workflow files
+rm -f .github/workflows/build.yml .github/workflows/ci-on-main.yml .github/workflows/main.yml .github/workflows/nodejs-ci.yml
+
+# Commit and push
+git add . && git commit -m "Remove duplicate CI workflows with invalid SHAs" && git push origin main# Get the latest SHA for a tag
+git ls-remote --refs https://github.com/actions/setup-node.git refs/tags/v4

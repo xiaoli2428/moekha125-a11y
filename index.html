@@ -1,14 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Onchain Web</title>
-    <meta name="description" content="Web3 DeFi Platform with wallet connectivity and live price tracking" />
-    <link rel="canonical" href="https://www.onchainweb.co/" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Onchain Web</title>
+  <meta name="description" content="Web3 DeFi Platform with wallet connectivity and live price tracking" />
+  <link rel="canonical" href="https://www.onchainweb.co/" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#071124" />
+  <meta property="og:title" content="OnchainWeb - Web3 DeFi Platform" />
+  <meta property="og:description" content="Web3 DeFi Platform with wallet connectivity and live price tracking" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.onchainweb.co/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OnchainWeb - Web3 DeFi Platform" />
+  <meta name="twitter:description" content="Web3 DeFi Platform with wallet connectivity and live price tracking" />
+  <!-- SPA Redirect Handler -->
+  <script>
+    ( function ()
+    {
+      var redirect = sessionStorage.getItem( 'redirect' );
+      if ( redirect )
+      {
+        sessionStorage.removeItem( 'redirect' );
+        // Handle the redirect path in your router
+        window.__SPA_REDIRECT_PATH__ = redirect;
+      }
+    } )();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onchain Web</title>
+    <meta name="description" content="Web3 DeFi Platform with wallet connectivity and live price tracking" />
+    <script>
+        // Single Page App redirect for GitHub Pages
+        // This script redirects 404 pages to index.html with the original path
+        // preserved in sessionStorage for client-side routing
+        ( function ()
+        {
+            var pathSegmentsToKeep = 1; // Keep 1 segment for /moekha125-a11y/
+            var l = window.location;
+            var repo = '/moekha125-a11y';
+
+            // Store the path for the SPA to handle
+            sessionStorage.setItem( 'redirect', l.pathname.slice( repo.length ) + l.search + l.hash );
+
+            // Redirect to the base URL
+            l.replace(
+                l.protocol + '//' + l.hostname + ( l.port ? ':' + l.port : '' ) +
+                repo + '/'
+            );
+        } )();
+    </script>
+</head>
+
+<body>
+    <noscript>
+        <p>JavaScript is required for this application.</p>
+        <p><a href="/moekha125-a11y/">Go to homepage</a></p>
+    </noscript>
+</body>
+
+</html>

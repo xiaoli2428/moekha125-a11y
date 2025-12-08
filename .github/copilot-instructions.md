@@ -1,66 +1,144 @@
-# Onchainweb - AI Coding Instructions
+# Copilot Instructions for moekha125-a11y
 
-**Onchainweb** is a minimal React + Vite + Tailwind CSS starter for a DeFi-style homepage with mock data only.
+## Project Overview
 
-## Architecture
-- Flat component structure in `src/components/` (Header, Hero, Features, Footer in App.jsx)
-- Presentational components with inline const arrays for data (e.g., `items` in Features.jsx)
-- No state management, props, or TypeScript
-- Entry point: `src/main.jsx` renders `<App />` into `#root` div in `index.html`
+This is **Onchainweb**, a minimal React + Vite + Tailwind CSS starter project for a DeFi-style homepage with a focus on accessibility (a11y). The project showcases a modern web3/DeFi interface with mock data for balances and markets.
 
-## Development Workflow
-- `npm run dev`: Vite dev server (default port 5173)
-- `npm run build`: Build to dist/
-- `npm run preview`: Preview build
-- `npm run postbuild`: Deploy to GitHub Pages via gh-pages
-- No linting/testing/hooks configured
+## Tech Stack
 
-## Code Patterns
-- **Components**: Default exports, PascalCase files (e.g., `Features.jsx`)
-- **Data**: Inline const arrays mapped in JSX (e.g., `items.map((it) => ...)`)
-- **Styling**: 
-  - Tailwind utility classes throughout
-  - Custom body gradients in `index.css`: `radial-gradient` overlays on `#0b1020` base
-  - Custom opacity utilities: `.bg-white/3` (3%), `.bg-white/2` (2%) defined in index.css
-  - Gradient containers: `bg-gradient-to-br from-purple-600 to-indigo-500`
-  - Button gradients: `bg-gradient-to-r from-purple-600 to-indigo-500`
-- **Icons**: Inline SVG elements with `stroke="currentColor"` or `stroke="white"` in gradient containers
-- **Sections**: Use `<section id="..." className="py-12 px-6 md:px-12">` with anchor-linked IDs (e.g., `#app`, `#markets`)
-- **Responsive**: Mobile-first with `md:` (768px+) and `lg:` (1024px+) breakpoints
-- **Mock data**: Use "• • • •" placeholder pattern for TVL/volume displays
-- **State (future)**: useState/useEffect for API fetches, local to components
+- **Framework**: React 18.2.0
+- **Build Tool**: Vite 5.0.0
+- **Styling**: Tailwind CSS 3.4.8
+- **Language**: JavaScript (JSX)
 
-## Component Structure
-- **Header**: Logo, nav links (hidden on mobile), Connect + Launch App buttons
-- **Hero**: 2-column grid (text + card mockup), badge, CTA buttons, stats cards
-- **Features**: 4-column grid (responsive to 2/1 cols), card items with icon, title, desc, button
-- **Footer**: Standard footer content
+## Project Structure
 
-## Common Tasks
-- **Add features**: Append to `items` array in `Features.jsx` with `{title, desc}` shape
-- **New sections**: Create component in `src/components/`, import in `App.jsx`, wrap in `<section id="..." className="py-12 px-6 md:px-12">`
-- **Colors**: Stick to purple-600, indigo-500, white/opacity for consistency
-- **Buttons**: Use `px-4 py-2 rounded-lg` for standard, `px-5 py-3 rounded-lg` for prominent CTAs
-- **Hover effects**: `hover:scale-[1.02] transition` for cards, `hover:opacity-95` for buttons
+```
+moekha125-a11y/
+├── src/
+│   ├── App.jsx                    # Main app component
+│   ├── main.jsx                   # Application entry point
+│   ├── index.css                  # Global styles and Tailwind imports
+│   └── components/
+│       ├── Header.jsx             # Navigation header
+│       ├── Hero.jsx               # Hero section with balances
+│       ├── Features.jsx           # Features/markets section
+│       └── Footer.jsx             # Footer component
+├── index.html.txt                 # HTML entry point
+├── package.json.txt               # Dependencies and scripts
+├── vite.config.js.txt            # Vite configuration
+├── tailwind.config.cjs.txt       # Tailwind configuration
+└── postcss.config.cjs.txt        # PostCSS configuration
+```
 
-## Restrictions
-- No subdirs in `src/components/`
-- No real blockchain APIs or wallet integration (mock data only)
-- No routing, state management libraries, or TypeScript
-- Keep all data inline (no separate data files)
+**Note**: Files currently have `.txt` extensions in the repository.
 
-## File Organization
-- `/src/main.jsx`: React render entry
-- `/src/App.jsx`: Main layout (header, main, footer)
-- `/src/index.css`: Tailwind imports + custom body gradient + utility classes
-- `/src/components/*.jsx`: Individual UI components
-- `/index.html`: HTML shell with `#root` div
-- `/vite.config.js`: Vite config with React plugin
-- `/tailwind.config.cjs`: Tailwind config (default)
-- `/postcss.config.cjs`: PostCSS config (default)
+## Development Commands
 
-## Future Backend Integration
-- **API Endpoint**: `GET /api/trading/levels?feature={ai_arbitrage|binary_options}`
-- **Response Schema**: `{ feature: string, levels: [{level: number, profitPercentage: number, minCapital: number, duration: string, riskLevel: string}] }`
-- **Frontend Pattern**: Fetch in `useEffect`, store in `useState`, map to JSX
-- **Example**: Replace `items` const in Features.jsx with API-fetched data
+```bash
+# Install dependencies
+npm install
+
+# Start development server (typically runs on http://localhost:5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Code Style and Conventions
+
+### React Components
+- Use functional components with hooks
+- Keep components focused and single-purpose
+- Place reusable components in `src/components/`
+
+### Styling
+- Use Tailwind CSS utility classes for styling
+- Follow mobile-first responsive design principles
+- Maintain consistent spacing using Tailwind's spacing scale
+- Primary color scheme: Dark theme (gray-900 background, white text)
+
+### Accessibility (a11y) Guidelines
+
+**Critical**: This project emphasizes accessibility. Always follow these principles:
+
+1. **Semantic HTML**
+   - Use appropriate HTML5 semantic elements (`<header>`, `<nav>`, `<main>`, `<footer>`, etc.)
+   - Use heading hierarchy correctly (h1, h2, h3, etc.)
+
+2. **ARIA Attributes**
+   - Add `aria-label` to interactive elements without visible text
+   - Use `aria-describedby` for additional context
+   - Include `role` attributes where semantic HTML isn't sufficient
+
+3. **Keyboard Navigation**
+   - Ensure all interactive elements are keyboard accessible
+   - Maintain logical tab order
+   - Add focus styles (visible focus indicators)
+
+4. **Color Contrast**
+   - Maintain WCAG AA standard (4.5:1 for normal text, 3:1 for large text)
+   - Don't rely solely on color to convey information
+
+5. **Alternative Text**
+   - Provide descriptive `alt` text for images
+   - Use empty `alt=""` for decorative images
+
+6. **Form Accessibility**
+   - Associate labels with form controls
+   - Provide clear error messages
+   - Include helpful placeholder text
+
+## Best Practices for Tasks
+
+### Ideal Tasks for Copilot
+- Add new React components
+- Implement new features in the DeFi interface
+- Fix bugs in existing components
+- Improve accessibility of existing UI elements
+- Add responsive design improvements
+- Update styling with Tailwind classes
+- Refactor components for better maintainability
+- Add documentation
+
+### Important Notes
+- When making changes, preserve existing accessibility features
+- Test components for keyboard navigation
+- Ensure color contrast meets WCAG standards
+- Keep bundle size minimal (this is a lightweight starter)
+- Mock data is used for balances and markets (no real on-chain integration yet)
+
+## Future Integration Possibilities
+
+The project is designed to support future enhancements:
+- Real price feeds integration
+- On-chain data connections
+- Wallet connect functionality (MetaMask, WalletConnect, wagmi)
+- Additional DeFi features (lending, staking, etc.)
+
+## Testing Guidelines
+
+Currently, there is no test infrastructure in place. When adding tests:
+- Use testing libraries consistent with React ecosystem (e.g., React Testing Library, Vitest)
+- Focus on accessibility testing (e.g., check ARIA attributes, keyboard navigation)
+- Test component rendering and user interactions
+- Consider adding accessibility auditing tools (e.g., axe-core, jest-axe)
+
+## Security Considerations
+
+- Never commit sensitive data (API keys, private keys, credentials)
+- Sanitize user inputs if adding form functionality
+- Follow secure coding practices for any future wallet integrations
+- Be cautious with external dependencies and regularly update them
+
+## Additional Context
+
+This project was created as an accessibility-focused DeFi interface starter. When working on issues:
+- Always prioritize accessibility in your solutions
+- Keep the minimal nature of the starter intact
+- Document any new patterns or components you add
+- Consider screen reader compatibility for new features

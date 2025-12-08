@@ -1,0 +1,115 @@
+/* Minimal, reusable styles for the MultiTimezoneClock components (includes toast) */
+.multi-clock {
+  --bg: #071124;
+  --card: #0b1220;
+  --accent: #06b6d4;
+  --muted: #94a3b8;
+  color: #e6eef6;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  padding: 12px;
+  position: relative;
+}
+
+.multi-clock .toolbar {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.multi-clock input[type="text"],
+.multi-clock select {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--muted);
+  padding:8px 10px;
+  border-radius:8px;
+  font-size:14px;
+  outline:none;
+}
+
+.multi-clock button {
+  background: rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.04);
+  color: var(--muted);
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.multi-clock button.primary {
+  background: linear-gradient(90deg,var(--accent),#60a5fa);
+  color: #042027;
+  border: 0;
+  font-weight:600;
+}
+
+.multi-clock .zones {
+  display:grid;
+  grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+  gap:12px;
+}
+
+.multi-clock .zone {
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  padding:12px;
+  border-radius:10px;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+.multi-clock .zone .tz {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.multi-clock .zone .name {
+  font-weight:700;
+  color:#dbeafe;
+  font-size:13px;
+}
+
+.multi-clock .zone .meta {
+  font-size:12px;
+  color:var(--muted);
+}
+
+.multi-clock .zone .time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+  font-size:18px;
+  margin-top:6px;
+  color:#f0f9ff;
+}
+
+.multi-clock .zone .date {
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* Toast */
+.multi-clock .toast {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(2,6,23,0.95);
+  color: #e6f6fb;
+  border: 1px solid rgba(6,182,212,0.12);
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+  font-size: 13px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.multi-clock .toast .dot {
+  width:8px;
+  height:8px;
+  background: var(--accent);
+  border-radius:50%;
+}

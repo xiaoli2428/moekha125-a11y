@@ -2,22 +2,45 @@
 
 This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style homepage inspired by the screenshot and ddefi3.com. Project name: Onchainweb.
 
-Quick start:
-1. Install dependencies:
-   - npm install
-2. Run dev server:
-   - npm run dev
-3. Build:
-   - npm run build
-4. Preview:
-   - npm run preview
+**Live URL:** [www.onchainweb.com](https://www.onchainweb.com/)
 
-Notes:
-- The UI uses mock data for balances and markets. I can integrate real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) on request.
-- Branch name to use: add-onchainweb-homepage
-- Commit message: "Add Onchainweb homepage"
+## Quick start
 
-If you want me to push:
-- Create the repo moekha125-a11y under the account xiaoli2428 and invite collaborator "copilot" with Write permission, then tell me and I will push the branch, commit files and open a PR.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-If you prefer to push yourself, use the git commands in the README to create the branch and push.
+2. **Run dev server:**
+   ```bash
+   npm run dev
+   ```
+   Opens on `http://localhost:5173`
+
+3. **Build for production:**
+   ```bash
+   npm run build
+   ```
+   Output: `dist/` folder
+
+4. **Preview production build:**
+   ```bash
+   npm run preview
+   ```
+   Opens on `http://localhost:4173`
+
+## Deployment
+
+After running `npm run build`, the `dist/` folder contains the production-ready static files. Deploy to any static hosting service:
+
+- **Netlify**: Drag & drop `dist/` folder or connect GitHub repo
+- **Vercel**: Import project and it auto-detects Vite
+- **GitHub Pages**: Use `gh-pages` package or GitHub Actions
+- **Other**: Any static hosting (S3, Cloudflare Pages, etc.)
+
+## Notes
+
+- The UI uses mock data for balances and markets. Real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) can be integrated on request.
+- Project uses ESM ("type": "module" in package.json)
+- Vite 6.x for optimal performance and security
+- Dependencies should be audited regularly; this repository enables Dependabot (see .github/dependabot.yml). Run `npm audit` locally and review Dependabot PRs to keep dependencies secure.

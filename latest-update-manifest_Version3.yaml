@@ -1,74 +1,102 @@
-manifest_version: "1.0"
-snapshot_time_utc: "2025-11-23T16:50:41Z"
-generated_by: "copilot (xiaoli2428)"
-description: "Manifest of repository files and permalinks for distribution. Includes file list and snapshot time to minimize errors during distribution."
-files:
-  - path: ".github"
-    type: "dir"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/.github"
-  - path: ".gitignore"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/.gitignore"
-  - path: "README.md"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/README.md"
-  - path: "README.md.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/README.md.txt"
-  - path: "dynamic"
-    type: "dir"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/dynamic"
-  - path: "index.html"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/index.html"
-  - path: "index.html.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/index.html.txt"
-  - path: "package.json"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/package.json"
-  - path: "package.json.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/package.json.txt"
-  - path: "postcss.config.cjs"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/postcss.config.cjs"
-  - path: "postcss.config.cjs.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/postcss.config.cjs.txt"
-  - path: "src/App.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20App.jsx.txt"
-  - path: "src/components/Features.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Features.jsx.txt"
-  - path: "src/components/Footer.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Footer.jsx.txt"
-  - path: "src/components/Header.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Header.jsx.txt"
-  - path: "src/components/Hero.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20components%20Hero.jsx.txt"
-  - path: "src/index.css.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20index.css.txt"
-  - path: "src/main.jsx.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/src%20main.jsx.txt"
-  - path: "src"
-    type: "dir"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/tree/copilot/link-with-subbase/src"
-  - path: "tailwind.config.cjs"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/tailwind.config.cjs"
-  - path: "tailwind.config.cjs.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/tailwind.config.cjs.txt"
-  - path: "vite.config.js"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/vite.config.js"
-  - path: "vite.config.js.txt"
-    type: "file"
-    url: "https://github.com/xiaoli2428/moekha125-a11y/blob/copilot/link-with-subbase/vite.config.js.txt"
+name: CI on main
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.0
+
+      - id: detect
+        name: Detect package manager / test config
+        run: |
+          set -euo pipefail
+          manager=none
+          lockfile=false
+
+          if [ -f package.json ]; then
+            manager=node
+            if [ -f package-lock.json ] || [ -f yarn. lock ] || [ -f pnpm-lock. yaml ] || [ -f npm-shrinkwrap.json ]; then
+              lockfile=true
+            fi
+          elif [ -f requirements. txt ] || ls *.py 1>/dev/null 2>/dev/null; then
+            manager=python
+          fi
+
+          echo "manager=$manager" >> "$GITHUB_OUTPUT"
+          echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node (with cache)
+        if: ${{ steps.detect.outputs. manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
+        uses: actions/setup-node@67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Node (no cache)
+        if: ${{ steps.detect.outputs.manager == 'node' && steps. detect.outputs.lockfile == 'false' }}
+        uses: actions/setup-node@67efd012dd5fd4b1e8fd670b9e6e766d518fad7c
+        with:
+          node-version: '18'
+
+      - name: Install and test (npm)
+        if: ${{ steps. detect.outputs.manager == 'node' }}
+        run: |
+          set -euo pipefail
+          # Deterministic install when lockfile exists
+          if [ "${{ steps.detect.outputs.lockfile }}" = "true" ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+          # Exit code 0 when test script exists; 1 otherwise
+          if node -e "try { const p=require('./package.json'); process. exit(p.scripts && p.scripts. test ? 0 : 1); } catch(e){ process.exit(1); }"; then
+            echo "npm test script found — running tests"
+            npm test
+          else
+            echo "No npm test script defined; skipping npm test"
+          fi
+
+      - name: Cache pip
+        if: ${{ steps. detect.outputs.manager == 'python' }}
+        uses: actions/cache@9ba2c813bdb76ea6a4984b91eb6b6458c538f88b
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Set up Python
+        if: ${{ steps. detect.outputs.manager == 'python' }}
+        uses: actions/setup-python@7e3cb3566ed1e4e341944bab96c2e3985136a476
+        with:
+          python-version: '3.x'
+
+      - name: Install and test (python)
+        if: ${{ steps.detect.outputs.manager == 'python' }}
+        run: |
+          set -euo pipefail
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+          fi
+          # Run tests (assumes pytest is used)
+          if command -v pytest >/dev/null 2>&1; then
+            pytest -q
+          else
+            echo "pytest not installed; skipping python tests"
+          fi
+
+      - name: No-op
+        if: ${{ steps. detect.outputs.manager == 'none' }}
+        run: echo "No recognized test config found; ensure you add tests or update CI workflow"

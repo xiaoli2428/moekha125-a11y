@@ -7,27 +7,27 @@ This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style h
 ## Quick start
 
 1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
 2. **Run dev server:**
-   ```bash
-   npm run dev
-   ```
-   Opens on `http://localhost:5173`
+    ```bash
+    npm run dev
+    ```
+    Opens on `http://localhost:5173`
 
 3. **Build for production:**
-   ```bash
-   npm run build
-   ```
-   Output: `dist/` folder
+    ```bash
+    npm run build
+    ```
+    Output: `dist/` folder
 
 4. **Preview production build:**
-   ```bash
-   npm run preview
-   ```
-   Opens on `http://localhost:4173`
+    ```bash
+    npm run preview
+    ```
+    Opens on `http://localhost:4173`
 
 ## Deployment
 
@@ -37,6 +37,16 @@ After running `npm run build`, the `dist/` folder contains the production-ready 
 - **Vercel**: Import project and it auto-detects Vite
 - **GitHub Pages**: Use `gh-pages` package or GitHub Actions
 - **Other**: Any static hosting (S3, Cloudflare Pages, etc.)
+
+## Public Release
+
+- **Status:** Released for public demo & use
+- **Deployment Target:** [Vercel](https://vercel.com/)
+- **Current Deployment:** Live and passing checks as of latest [GitHub Actions](https://github.com/xiaoli2428/moekha125-a11y/actions?query=branch%3Amain) build ([Vercel notification workflow run - Success](https://github.com/xiaoli2428/moekha125-a11y/actions/runs/20069889984))
+
+This project is now publicly accessible, with the static production build deployed on Vercel. If you require the current preview or status, see the [latest deployments](https://github.com/xiaoli2428/moekha125-a11y/actions?query=branch%3Amain) tab.
+
+Security & privacy: No private API keys or wallet integrations are present in this release. When adding integrations, use .env and follow best practices.
 
 ## Notes
 

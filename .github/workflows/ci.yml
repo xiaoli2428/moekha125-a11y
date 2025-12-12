@@ -2,12 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [copilot/link-with-subbase]
+    branches: [main]
   pull_request:
-    branches: [copilot/link-with-subbase]
-
-permissions:
-  contents: read
+    branches: [main]
 
 jobs:
   build:
@@ -19,10 +16,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -39,20 +36,13 @@ jobs:
       - name: Test
         run: npm test --if-present
 
+      # Only keep relevant artifact uploads:
       - name: Upload dist artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dist
           path: dist/
-          if-no-files-found: ignore
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
-        with:
-          name: build
-          path: build/
           if-no-files-found: ignore
 
       - name: Print npm audit info

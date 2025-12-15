@@ -62,21 +62,22 @@ function loadFromStorage(zonesKey, hour12Key) {
   try {
     const zonesData = localStorage.getItem(zonesKey);
     const hour12Data = localStorage.getItem(hour12Key);
-    
+
     let parsed = null;
     if (zonesData) {
       parsed = JSON.parse(zonesData);
     }
-    
+
     const normalized = normalizePayload(parsed);
-    
+
     // Override hour12 if separately stored (legacy support)
     if (hour12Data !== null) {
       normalized.hour12 = hour12Data === 'true';
     }
-    
+
     return normalized;
-  } catch {
+  } catch (error) {
+    console.warn('Failed to load timezone settings from localStorage', error);
     return { zones: [], hour12: true, updatedAt: Date.now() };
   }
 }
@@ -91,8 +92,8 @@ function saveToStorage(zonesKey, hour12Key, state) {
   try {
     localStorage.setItem(zonesKey, JSON.stringify(state));
     localStorage.setItem(hour12Key, String(state.hour12));
-  } catch {
-    // Storage quota exceeded or not available
+  } catch (error) {
+    console.warn('Failed to persist timezone settings to localStorage', error);
   }
 }
 

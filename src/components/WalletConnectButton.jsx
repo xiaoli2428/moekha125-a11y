@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 function shortenAddress(address) {
   if (!address || typeof address !== 'string') return ''
@@ -7,13 +7,23 @@ function shortenAddress(address) {
 
 export default function WalletConnectButton() {
   const [account, setAccount] = useState('')
+  const [hasProvider, setHasProvider] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState('')
 
-  const hasProvider = useMemo(() => typeof window !== 'undefined' && typeof window.ethereum !== 'undefined', [])
-
   useEffect(() => {
-    if (!hasProvider) return
+    const updateProviderAvailability = () => {
+      const providerDetected = typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
+      setHasProvider(providerDetected)
+      return providerDetected
+    }
+
+    const providerAvailable = updateProviderAvailability()
+    if (!providerAvailable) {
+      const onEthereumInitialized = () => updateProviderAvailability()
+      window?.addEventListener('ethereum#initialized', onEthereumInitialized, { once: true })
+      return () => window?.removeEventListener('ethereum#initialized', onEthereumInitialized)
+    }
 
     const handleAccountsChanged = (accounts) => {
       if (accounts && accounts.length > 0) {
@@ -34,7 +44,7 @@ export default function WalletConnectButton() {
     return () => {
       window.ethereum?.removeListener('accountsChanged', handleAccountsChanged)
     }
-  }, [hasProvider])
+  }, [])
 
   const connectWallet = async () => {
     setError('')
@@ -68,8 +78,8 @@ export default function WalletConnectButton() {
       <button
         type="button"
         onClick={connectWallet}
-        className="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-white/10 rounded-lg text-sm hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-60"
-        aria-label={account ? `Connected wallet ${shortenAddress(account)}` : 'Connect wallet'}
+        className="inline-flex items-center gap-2 px-4 py-2 border border-white/10 rounded-lg text-sm hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-60"
+        aria-label={account ? `Connected wallet ${shortenAddress(account)}` : isConnecting ? 'Connecting to wallet' : 'Connect wallet'}
         disabled={isConnecting}
       >
         {account ? (
@@ -77,6 +87,8 @@ export default function WalletConnectButton() {
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
             {shortenAddress(account)}
           </>
+        ) : isConnecting ? (
+          'Connecting…'
         ) : (
           'Connect'
         )}

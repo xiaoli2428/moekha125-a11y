@@ -7,7 +7,7 @@ function shortenAddress(address) {
 
 export default function WalletConnectButton() {
   const [account, setAccount] = useState('')
-  const [hasProvider, setHasProvider] = useState(false)
+  const [hasProvider, setHasProvider] = useState(() => typeof window !== 'undefined' && typeof window.ethereum !== 'undefined')
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState('')
 
@@ -49,14 +49,16 @@ export default function WalletConnectButton() {
   const connectWallet = async () => {
     setError('')
 
-    if (!hasProvider) {
+    const provider = typeof window !== 'undefined' ? window.ethereum : undefined
+    if (!provider) {
+      setHasProvider(false)
       setError('No Ethereum wallet detected. Please install MetaMask or a compatible wallet.')
       return
     }
 
     try {
       setIsConnecting(true)
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const accounts = await provider.request({ method: 'eth_requestAccounts' })
       if (!accounts || accounts.length === 0) {
         setError('No accounts returned from wallet.')
         return

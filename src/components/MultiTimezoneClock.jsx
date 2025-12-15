@@ -213,9 +213,17 @@ export default function MultiTimezoneClock({
   const [toasts, setToasts] = useState([]);
   const [showImportExport, setShowImportExport] = useState(false);
   const [importText, setImportText] = useState('');
-  
+
   const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const toastTimersRef = useRef([]);
+
+  useEffect(() => {
+    return () => {
+      toastTimersRef.current.forEach(timerId => clearTimeout(timerId));
+      toastTimersRef.current = [];
+    };
+  }, []);
   
   // Filtered timezones for dropdown
   const filteredTimezones = useMemo(() => {
@@ -235,9 +243,11 @@ export default function MultiTimezoneClock({
   const showToast = useCallback((message, type = 'info') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
+      toastTimersRef.current = toastTimersRef.current.filter(tid => tid !== timerId);
     }, 3000);
+    toastTimersRef.current.push(timerId);
   }, []);
   
   // Save to storage when state changes

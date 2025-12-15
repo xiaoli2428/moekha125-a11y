@@ -4,8 +4,16 @@ import { inject } from '@vercel/analytics'
 import { injectSpeedInsights } from '@vercel/speed-insights'
 import App from './App'
 import './index.css'
+import ErrorBoundary from './components/ErrorBoundary'
+import { setupGlobalErrorHandlers } from './utils/monitoring'
 
 inject()
 injectSpeedInsights()
 
-createRoot(document.getElementById('root')).render(<App />)
+setupGlobalErrorHandlers()
+
+createRoot(document.getElementById('root')).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+)

@@ -40,6 +40,14 @@ After running `npm run build`, the `dist/` folder contains the production-ready 
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks.
 
+## Monitoring and error reporting
+
+- Optional: set `VITE_MONITORING_ENDPOINT` to a POST endpoint to receive JSON reports from runtime errors and unhandled promise
+  rejections (sent via `navigator.sendBeacon` when available).
+- Control sampling with `VITE_MONITORING_SAMPLE_RATE` (defaults to `1` for 100% of events, accepts `0`–`1`).
+- All runtime errors are also surfaced through an in-app error boundary that displays a user-facing alert instead of a blank scre
+  en.
+
 ## Notes
 
 - The UI uses mock data for balances and markets. Real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) can be integrated on request.

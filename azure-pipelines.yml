@@ -4,7 +4,10 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- copilot/link-with-subbase
+- main
+
+pr:
+- main
 
 pool:
   vmImage: ubuntu-latest
@@ -15,7 +18,23 @@ steps:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
+- task: Cache@2
+  displayName: 'Cache npm'
+  inputs:
+    key: 'npm | "$(Agent.OS)" | package-lock.json'
+    restoreKeys: |
+      npm | "$(Agent.OS)"
+    path: '$(Pipeline.Workspace)/.npm'
+
 - script: |
-    npm install
+    npm ci
     npm run build
-  displayName: 'npm install and build'
+  displayName: 'npm ci and build'
+  env:
+    NPM_CONFIG_CACHE: $(Pipeline.Workspace)/.npm
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish dist artifact'
+  inputs:
+    PathtoPublish: 'dist'
+    ArtifactName: 'dist'

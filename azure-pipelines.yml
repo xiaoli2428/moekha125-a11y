@@ -28,8 +28,9 @@ steps:
 
 - script: |
     npm ci
+    npm audit --omit=dev --audit-level=high
     npm run build
-  displayName: 'npm ci and build'
+  displayName: 'npm ci, audit, and build'
   env:
     NPM_CONFIG_CACHE: $(Pipeline.Workspace)/.npm
 

@@ -38,15 +38,7 @@ After running `npm run build`, the `dist/` folder contains the production-ready 
 - **GitHub Pages**: Use `gh-pages` package or GitHub Actions
 - **Other**: Any static hosting (S3, Cloudflare Pages, etc.)
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks.
-
-## Monitoring and error reporting
-
-- Optional: set `VITE_MONITORING_ENDPOINT` to a POST endpoint to receive JSON reports from runtime errors and unhandled promise
-  rejections (sent via `navigator.sendBeacon` when available).
-- Control sampling with `VITE_MONITORING_SAMPLE_RATE` (defaults to `1` for 100% of events, accepts `0`–`1`).
-- All runtime errors are also surfaced through an in-app error boundary that displays a user-facing alert instead of a blank scre
-  en.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks. Azure Pipelines is configured to run `npm ci`, a production-focused `npm audit`, and the production build on pushes to `main` and pull requests.
 
 ## Notes
 

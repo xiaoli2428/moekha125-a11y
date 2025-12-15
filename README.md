@@ -33,10 +33,12 @@ This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style h
 
 After running `npm run build`, the `dist/` folder contains the production-ready static files. Deploy to any static hosting service:
 
-- **Netlify**: Drag & drop `dist/` folder or connect GitHub repo
+- **Netlify**: Drag & drop `dist/` folder or connect GitHub repo. A `netlify.toml` is included to set the build command, publish folder, security headers, and long-term caching for `assets/`.
 - **Vercel**: Import project and it auto-detects Vite
 - **GitHub Pages**: Use `gh-pages` package or GitHub Actions
 - **Other**: Any static hosting (S3, Cloudflare Pages, etc.)
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks. Azure Pipelines is configured to run `npm ci`, a production-focused `npm audit`, and the production build on pushes to `main` and pull requests.
 
 ## Notes
 

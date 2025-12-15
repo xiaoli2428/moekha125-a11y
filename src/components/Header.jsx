@@ -1,4 +1,5 @@
 import React from 'react'
+import WalletConnectButton from './WalletConnectButton'
 
 export default function Header() {
   return (
@@ -23,7 +24,7 @@ export default function Header() {
       </nav>
 
       <div className="flex items-center space-x-3" role="group" aria-label="Wallet actions">
-        <button type="button" className="hidden md:inline-block px-4 py-2 border border-white/10 rounded-lg text-sm hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900" aria-label="Connect wallet">Connect</button>
+        <WalletConnectButton />
         <button type="button" className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-sm font-semibold shadow-md hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900" aria-label="Launch application">Launch App</button>
       </div>
     </header>

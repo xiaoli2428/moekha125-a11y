@@ -59,24 +59,34 @@ function normalizePayload(data) {
  * @returns {{zones: Array, hour12: boolean, updatedAt: number}}
  */
 function loadFromStorage(zonesKey, hour12Key) {
+  if (typeof localStorage === 'undefined') {
+    console.warn('localStorage is not available; using default timezone settings', { zonesKey, hour12Key });
+    return { zones: [], hour12: true, updatedAt: Date.now() };
+  }
+
   try {
     const zonesData = localStorage.getItem(zonesKey);
     const hour12Data = localStorage.getItem(hour12Key);
-    
+
     let parsed = null;
     if (zonesData) {
-      parsed = JSON.parse(zonesData);
+      try {
+        parsed = JSON.parse(zonesData);
+      } catch (parseError) {
+        console.warn('Ignoring invalid timezone settings JSON in localStorage', { zonesKey }, parseError);
+      }
     }
-    
+
     const normalized = normalizePayload(parsed);
-    
+
     // Override hour12 if separately stored (legacy support)
     if (hour12Data !== null) {
       normalized.hour12 = hour12Data === 'true';
     }
-    
+
     return normalized;
-  } catch {
+  } catch (error) {
+    console.warn('Failed to load timezone settings from localStorage', { zonesKey, hour12Key }, error);
     return { zones: [], hour12: true, updatedAt: Date.now() };
   }
 }
@@ -88,11 +98,16 @@ function loadFromStorage(zonesKey, hour12Key) {
  * @param {{zones: Array, hour12: boolean, updatedAt: number}} state
  */
 function saveToStorage(zonesKey, hour12Key, state) {
+  if (typeof localStorage === 'undefined') {
+    console.warn('localStorage is not available; skipping timezone settings persistence', { zonesKey, hour12Key });
+    return;
+  }
+
   try {
     localStorage.setItem(zonesKey, JSON.stringify(state));
     localStorage.setItem(hour12Key, String(state.hour12));
-  } catch {
-    // Storage quota exceeded or not available
+  } catch (error) {
+    console.warn('Failed to persist timezone settings to localStorage', { zonesKey, hour12Key }, error);
   }
 }
 
@@ -213,9 +228,17 @@ export default function MultiTimezoneClock({
   const [toasts, setToasts] = useState([]);
   const [showImportExport, setShowImportExport] = useState(false);
   const [importText, setImportText] = useState('');
-  
+
   const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const toastTimersRef = useRef([]);
+
+  useEffect(() => {
+    return () => {
+      toastTimersRef.current.forEach(timerId => clearTimeout(timerId));
+      toastTimersRef.current = [];
+    };
+  }, []);
   
   // Filtered timezones for dropdown
   const filteredTimezones = useMemo(() => {
@@ -235,9 +258,11 @@ export default function MultiTimezoneClock({
   const showToast = useCallback((message, type = 'info') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
+      toastTimersRef.current = toastTimersRef.current.filter(tid => tid !== timerId);
     }, 3000);
+    toastTimersRef.current.push(timerId);
   }, []);
   
   // Save to storage when state changes
@@ -255,6 +280,14 @@ export default function MultiTimezoneClock({
   
   // Cross-tab sync via storage event
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      console.warn(
+        'Skipping storage sync: window or localStorage is unavailable',
+        { zonesKey, hour12Key }
+      );
+      return undefined;
+    }
+
     const handleStorage = (event) => {
       if (event.key === zonesKey && event.newValue) {
         try {
@@ -273,11 +306,11 @@ export default function MultiTimezoneClock({
                 ![...localZoneSet].every(z => resolvedZoneSet.has(z))) {
               showToast('Clocks synced from another tab', 'info');
             }
-            
+
             return resolved;
           });
-        } catch {
-          // Invalid JSON, ignore
+        } catch (error) {
+          console.warn('Ignoring malformed timezone payload from storage event', { key: event.key }, error);
         }
       }
       
@@ -292,13 +325,17 @@ export default function MultiTimezoneClock({
         });
       }
     };
-    
+
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, [zonesKey, hour12Key, syncStrategy, showToast]);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);

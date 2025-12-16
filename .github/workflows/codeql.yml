@@ -23,8 +23,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@b374143c1149a9115d881581d29b8390bbcbb59c # v2
         with:
-          # Include repository languages that exist plus actions.
-          languages: javascript,typescript,actions
+          languages: javascript,typescript
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@b374143c1149a9115d881581d29b8390bbcbb59c # v2

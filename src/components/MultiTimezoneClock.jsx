@@ -65,7 +65,11 @@ function loadFromStorage(zonesKey, hour12Key) {
 
     let parsed = null;
     if (zonesData) {
-      parsed = JSON.parse(zonesData);
+      try {
+        parsed = JSON.parse(zonesData);
+      } catch (parseError) {
+        console.warn('Ignoring invalid timezone settings JSON in localStorage', { zonesKey }, parseError);
+      }
     }
 
     const normalized = normalizePayload(parsed);
@@ -77,7 +81,7 @@ function loadFromStorage(zonesKey, hour12Key) {
 
     return normalized;
   } catch (error) {
-    console.warn('Failed to load timezone settings from localStorage', error);
+    console.warn('Failed to load timezone settings from localStorage', { zonesKey, hour12Key }, error);
     return { zones: [], hour12: true, updatedAt: Date.now() };
   }
 }
@@ -93,7 +97,7 @@ function saveToStorage(zonesKey, hour12Key, state) {
     localStorage.setItem(zonesKey, JSON.stringify(state));
     localStorage.setItem(hour12Key, String(state.hour12));
   } catch (error) {
-    console.warn('Failed to persist timezone settings to localStorage', error);
+    console.warn('Failed to persist timezone settings to localStorage', { zonesKey, hour12Key }, error);
   }
 }
 
@@ -284,11 +288,11 @@ export default function MultiTimezoneClock({
                 ![...localZoneSet].every(z => resolvedZoneSet.has(z))) {
               showToast('Clocks synced from another tab', 'info');
             }
-            
+
             return resolved;
           });
-        } catch {
-          // Invalid JSON, ignore
+        } catch (error) {
+          console.warn('Ignoring malformed timezone payload from storage event', { key: event.key }, error);
         }
       }
       

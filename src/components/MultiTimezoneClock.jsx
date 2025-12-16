@@ -280,6 +280,14 @@ export default function MultiTimezoneClock({
   
   // Cross-tab sync via storage event
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      console.warn(
+        'Skipping storage sync: window or localStorage is unavailable',
+        { zonesKey, hour12Key }
+      );
+      return undefined;
+    }
+
     const handleStorage = (event) => {
       if (event.key === zonesKey && event.newValue) {
         try {
@@ -317,13 +325,17 @@ export default function MultiTimezoneClock({
         });
       }
     };
-    
+
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, [zonesKey, hour12Key, syncStrategy, showToast]);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);

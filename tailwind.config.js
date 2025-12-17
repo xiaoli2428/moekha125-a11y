@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import('tailwindcss').Config} */
+export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
@@ -9,7 +10,7 @@ module.exports = {
       backgroundImage: {
         'hero-gradient': 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(99,102,241,0.06))'
       }
-    },
+    }
   },
-  plugins: [],
+  plugins: []
 }

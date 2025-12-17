@@ -44,5 +44,5 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks. 
 
 - The UI uses mock data for balances and markets. Real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) can be integrated on request.
 - Project uses ESM ("type": "module" in package.json)
-- Vite 6.x for optimal performance and security
+- React 19, Tailwind CSS 4, and Vite 7 for optimal performance and security
 - Dependencies should be audited regularly; this repository enables Dependabot (see .github/dependabot.yml). Run `npm audit` locally and review Dependabot PRs to keep dependencies secure.

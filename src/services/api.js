@@ -246,10 +246,77 @@ export const kycAPI = {
   getStatus: () => apiCall('/kyc/status')
 };
 
+// Chat API
+export const chatAPI = {
+  getMessages: (limit = 50, offset = 0) =>
+    apiCall(`/chat/messages?limit=${limit}&offset=${offset}`),
+
+  sendMessage: (message) =>
+    apiCall('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    }),
+
+  getUnreadCount: () => apiCall('/chat/unread'),
+
+  // Admin
+  getAllChats: () => apiCall('/chat/admin/all'),
+
+  getUserMessages: (userId) => apiCall(`/chat/admin/${userId}`),
+
+  sendAdminReply: (userId, message) =>
+    apiCall(`/chat/admin/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    })
+};
+
+// Coins API
+export const coinsAPI = {
+  getSupportedCoins: () => apiCall('/coins'),
+
+  getDepositAddresses: () => apiCall('/coins/deposit-addresses'),
+
+  // Admin
+  getAllCoins: () => apiCall('/coins/admin/all'),
+
+  createCoin: (data) =>
+    apiCall('/coins/admin', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  updateCoin: (id, data) =>
+    apiCall(`/coins/admin/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }),
+
+  deleteCoin: (id) =>
+    apiCall(`/coins/admin/${id}`, {
+      method: 'DELETE'
+    }),
+
+  getUserAddresses: (userId) => apiCall(`/coins/admin/addresses/${userId}`),
+
+  setUserAddress: (userId, data) =>
+    apiCall(`/coins/admin/addresses/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  deleteUserAddress: (addressId) =>
+    apiCall(`/coins/admin/addresses/${addressId}`, {
+      method: 'DELETE'
+    })
+};
+
 export default {
   auth: authAPI,
   wallet: walletAPI,
   trading: tradingAPI,
   support: supportAPI,
-  admin: adminAPI
+  admin: adminAPI,
+  chat: chatAPI,
+  coins: coinsAPI
 }

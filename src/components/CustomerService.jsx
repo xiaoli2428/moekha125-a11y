@@ -1,34 +1,53 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import LiveChat from './LiveChat';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export default function CustomerService() {
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const handleOpen = () => {
-    setIsOpen(true);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (token) {
+      fetchUnreadCount();
+      // Check for unread messages every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [token]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/chat/unread`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.unread || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-  };
-
-  const handleOpenSupport = () => {
-    setIsOpen(false);
-    navigate('/support');
+  const handleOpenChat = () => {
+    setIsChatOpen(true);
+    setUnreadCount(0);
   };
 
   return (
     <>
-      {/* Customer Service Button */}
+      {/* Customer Service Floating Button */}
       <button
-        onClick={handleOpen}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-500 text-white px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all hover:scale-105 z-40 flex items-center gap-2"
+        onClick={handleOpenChat}
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-500 text-white p-4 rounded-full shadow-lg hover:opacity-90 transition-all hover:scale-105 z-40"
         aria-label="Open Customer Service"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
+          className="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -37,145 +56,20 @@ export default function CustomerService() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
         </svg>
-        <span className="font-semibold">Support</span>
+        
+        {/* Unread Badge */}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
-      {/* Modal Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={handleClose}
-        >
-          {/* Modal Content */}
-          <div
-            className="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Customer Service</h2>
-                <p className="text-gray-400 text-sm mt-1">We're here to help 24/7</p>
-              </div>
-              <button
-                onClick={handleClose}
-                className="text-gray-400 hover:text-white transition"
-                aria-label="Close"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="space-y-4">
-              <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="bg-purple-500 rounded-full p-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-white">Live Chat Support</div>
-                    <div className="text-sm text-gray-400">Open a support ticket</div>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm mb-4">
-                  Connect with our support team for instant assistance with your trades, account, and platform questions.
-                </p>
-                <button
-                  onClick={handleOpenSupport}
-                  className="block w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-center py-3 rounded-lg font-semibold hover:opacity-90 transition"
-                >
-                  Open Support Center
-                </button>
-              </div>
-
-              {/* Additional Info */}
-              <div className="text-sm text-gray-400 space-y-2">
-                <div className="flex items-start gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>Average response time: 2 minutes</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>24/7 support available</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>Secure and encrypted messaging</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Live Chat Component */}
+      <LiveChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </>
   );
 }

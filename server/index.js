@@ -9,6 +9,8 @@ import arbitrageRoutes from './routes/arbitrage.js'
 import adminRoutes from './routes/admin.js'
 import kycRoutes from './routes/kyc.js'
 import telegramRoutes from './routes/telegram.js'
+import chatRoutes from './routes/chat.js'
+import coinsRoutes from './routes/coins.js'
 import { settleExpiredTrades } from './controllers/tradingController.js'
 import { executeArbitrage } from './controllers/arbitrageController.js'
 import supabase from './config/database.js'
@@ -45,6 +47,8 @@ app.use('/api/arbitrage', arbitrageRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/kyc', kycRoutes)
 app.use('/api/telegram', telegramRoutes)
+app.use('/api/chat', chatRoutes)
+app.use('/api/coins', coinsRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

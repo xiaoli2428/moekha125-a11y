@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminAPI, tradingAPI } from '../services/api';
+import { adminAPI, tradingAPI, chatAPI, coinsAPI } from '../services/api';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('users');
@@ -10,6 +10,15 @@ export default function Admin() {
   const [arbitrageLevels, setArbitrageLevels] = useState([]);
   const [arbitrageTrades, setArbitrageTrades] = useState([]);
   const [kycSubmissions, setKycSubmissions] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [selectedChatUser, setSelectedChatUser] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatReply, setChatReply] = useState('');
+  const [coins, setCoins] = useState([]);
+  const [selectedUserForAddresses, setSelectedUserForAddresses] = useState(null);
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [newAddress, setNewAddress] = useState({ coin_symbol: '', network: '', address: '' });
+  const [newCoin, setNewCoin] = useState({ symbol: '', name: '', networks: '' });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,6 +48,12 @@ export default function Admin() {
       } else if (activeTab === 'kyc') {
         const response = await adminAPI.getAllKYCSubmissions();
         setKycSubmissions(response.submissions || []);
+      } else if (activeTab === 'chat') {
+        const response = await chatAPI.getAllChats();
+        setChats(response.chats || []);
+      } else if (activeTab === 'coins') {
+        const response = await coinsAPI.getAllCoins();
+        setCoins(response.coins || []);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -122,6 +137,8 @@ export default function Admin() {
             { key: 'levels', label: 'Trade Levels' },
             { key: 'ai-levels', label: 'AI Levels' },
             { key: 'ai-trades', label: 'AI Trades' },
+            { key: 'chat', label: 'Live Chat' },
+            { key: 'coins', label: 'Coins' },
             { key: 'stats', label: 'Stats' }
           ].map((tab) => (
             <button
@@ -810,6 +827,334 @@ export default function Admin() {
             <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl p-6 border border-yellow-500/30">
               <div className="text-sm text-gray-300 mb-2">Active Users</div>
               <div className="text-3xl font-bold">{stats.activeUsers}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Live Chat Tab */}
+        {activeTab === 'chat' && (
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Chat List */}
+            <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <h2 className="font-semibold">Conversations</h2>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto">
+                {chats.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">No conversations yet</div>
+                ) : (
+                  chats.map((chat) => (
+                    <div
+                      key={chat.user_id}
+                      onClick={async () => {
+                        setSelectedChatUser(chat);
+                        const res = await chatAPI.getUserMessages(chat.user_id);
+                        setChatMessages(res.messages || []);
+                      }}
+                      className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition ${
+                        selectedChatUser?.user_id === chat.user_id ? 'bg-white/10' : ''
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">{chat.user?.username || chat.user?.email}</div>
+                          <p className="text-sm text-gray-400 truncate">{chat.last_message}</p>
+                        </div>
+                        {chat.unread_count > 0 && (
+                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                            {chat.unread_count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="lg:col-span-2 bg-white/5 rounded-xl border border-white/10 flex flex-col h-[600px]">
+              {selectedChatUser ? (
+                <>
+                  <div className="p-4 border-b border-white/10">
+                    <div className="font-semibold">{selectedChatUser.user?.username || selectedChatUser.user?.email}</div>
+                    <div className="text-xs text-gray-400">User ID: {selectedChatUser.user_id.slice(0, 8)}</div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {chatMessages.map((msg) => (
+                      <div key={msg.id} className={`flex ${msg.is_from_admin ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[70%] rounded-xl px-4 py-2 ${
+                          msg.is_from_admin ? 'bg-purple-600' : 'bg-gray-700'
+                        }`}>
+                          <p className="text-sm">{msg.message}</p>
+                          <p className="text-xs text-gray-300 mt-1">{new Date(msg.created_at).toLocaleTimeString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 border-t border-white/10">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={chatReply}
+                        onChange={(e) => setChatReply(e.target.value)}
+                        placeholder="Type your reply..."
+                        className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg"
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter' && chatReply.trim()) {
+                            await chatAPI.sendAdminReply(selectedChatUser.user_id, chatReply);
+                            setChatReply('');
+                            const res = await chatAPI.getUserMessages(selectedChatUser.user_id);
+                            setChatMessages(res.messages || []);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (chatReply.trim()) {
+                            await chatAPI.sendAdminReply(selectedChatUser.user_id, chatReply);
+                            setChatReply('');
+                            const res = await chatAPI.getUserMessages(selectedChatUser.user_id);
+                            setChatMessages(res.messages || []);
+                          }
+                        }}
+                        className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                  Select a conversation to view messages
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Coins & Addresses Tab */}
+        {activeTab === 'coins' && (
+          <div className="space-y-6">
+            {/* Supported Coins */}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <h2 className="text-xl font-bold mb-4">Supported Coins</h2>
+              
+              {/* Add New Coin */}
+              <div className="flex gap-3 mb-6">
+                <input
+                  type="text"
+                  placeholder="Symbol (e.g., BTC)"
+                  value={newCoin.symbol}
+                  onChange={(e) => setNewCoin({ ...newCoin, symbol: e.target.value.toUpperCase() })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg w-32"
+                />
+                <input
+                  type="text"
+                  placeholder="Name (e.g., Bitcoin)"
+                  value={newCoin.name}
+                  onChange={(e) => setNewCoin({ ...newCoin, name: e.target.value })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg flex-1"
+                />
+                <input
+                  type="text"
+                  placeholder="Networks (comma-separated)"
+                  value={newCoin.networks}
+                  onChange={(e) => setNewCoin({ ...newCoin, networks: e.target.value })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg flex-1"
+                />
+                <button
+                  onClick={async () => {
+                    if (newCoin.symbol && newCoin.name) {
+                      await coinsAPI.createCoin({
+                        symbol: newCoin.symbol,
+                        name: newCoin.name,
+                        networks: newCoin.networks.split(',').map(n => n.trim()).filter(Boolean)
+                      });
+                      setNewCoin({ symbol: '', name: '', networks: '' });
+                      const res = await coinsAPI.getAllCoins();
+                      setCoins(res.coins || []);
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+                >
+                  Add Coin
+                </button>
+              </div>
+
+              {/* Coins Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-3 px-4">Symbol</th>
+                      <th className="text-left py-3 px-4">Name</th>
+                      <th className="text-left py-3 px-4">Networks</th>
+                      <th className="text-left py-3 px-4">Status</th>
+                      <th className="text-left py-3 px-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coins.map((coin) => (
+                      <tr key={coin.id} className="border-b border-white/5">
+                        <td className="py-3 px-4 font-medium">{coin.symbol}</td>
+                        <td className="py-3 px-4">{coin.name}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-1 flex-wrap">
+                            {(coin.networks || []).map((n, i) => (
+                              <span key={i} className="px-2 py-1 bg-gray-700 rounded text-xs">{n}</span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded text-xs ${coin.is_active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                            {coin.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={async () => {
+                              await coinsAPI.updateCoin(coin.id, { is_active: !coin.is_active });
+                              const res = await coinsAPI.getAllCoins();
+                              setCoins(res.coins || []);
+                            }}
+                            className="text-sm text-purple-400 hover:text-purple-300 mr-3"
+                          >
+                            {coin.is_active ? 'Disable' : 'Enable'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('Delete this coin?')) {
+                                await coinsAPI.deleteCoin(coin.id);
+                                const res = await coinsAPI.getAllCoins();
+                                setCoins(res.coins || []);
+                              }
+                            }}
+                            className="text-sm text-red-400 hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* User Deposit Addresses */}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <h2 className="text-xl font-bold mb-4">User Deposit Addresses</h2>
+              
+              {/* Select User */}
+              <div className="mb-6">
+                <label className="block text-sm text-gray-400 mb-2">Select User</label>
+                <select
+                  value={selectedUserForAddresses?.id || ''}
+                  onChange={async (e) => {
+                    const user = users.find(u => u.id === e.target.value);
+                    setSelectedUserForAddresses(user);
+                    if (user) {
+                      const res = await coinsAPI.getUserAddresses(user.id);
+                      setUserAddresses(res.addresses || []);
+                    }
+                  }}
+                  className="w-full md:w-64 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg"
+                >
+                  <option value="">-- Select a user --</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.email} ({user.username})</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedUserForAddresses && (
+                <>
+                  {/* Add New Address */}
+                  <div className="flex gap-3 mb-6">
+                    <select
+                      value={newAddress.coin_symbol}
+                      onChange={(e) => setNewAddress({ ...newAddress, coin_symbol: e.target.value })}
+                      className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg"
+                    >
+                      <option value="">Select Coin</option>
+                      {coins.filter(c => c.is_active).map((coin) => (
+                        <option key={coin.id} value={coin.symbol}>{coin.symbol}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Network (e.g., ERC20)"
+                      value={newAddress.network}
+                      onChange={(e) => setNewAddress({ ...newAddress, network: e.target.value })}
+                      className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg w-40"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Deposit Address"
+                      value={newAddress.address}
+                      onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                      className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg flex-1"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (newAddress.coin_symbol && newAddress.network && newAddress.address) {
+                          await coinsAPI.setUserAddress(selectedUserForAddresses.id, newAddress);
+                          setNewAddress({ coin_symbol: '', network: '', address: '' });
+                          const res = await coinsAPI.getUserAddresses(selectedUserForAddresses.id);
+                          setUserAddresses(res.addresses || []);
+                        }
+                      }}
+                      className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Addresses Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-left py-3 px-4">Coin</th>
+                          <th className="text-left py-3 px-4">Network</th>
+                          <th className="text-left py-3 px-4">Address</th>
+                          <th className="text-left py-3 px-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userAddresses.map((addr) => (
+                          <tr key={addr.id} className="border-b border-white/5">
+                            <td className="py-3 px-4 font-medium">{addr.coin_symbol}</td>
+                            <td className="py-3 px-4">{addr.network}</td>
+                            <td className="py-3 px-4 font-mono text-sm">{addr.address}</td>
+                            <td className="py-3 px-4">
+                              <button
+                                onClick={async () => {
+                                  if (confirm('Delete this address?')) {
+                                    await coinsAPI.deleteUserAddress(addr.id);
+                                    const res = await coinsAPI.getUserAddresses(selectedUserForAddresses.id);
+                                    setUserAddresses(res.addresses || []);
+                                  }
+                                }}
+                                className="text-sm text-red-400 hover:text-red-300"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {userAddresses.length === 0 && (
+                      <div className="text-center py-8 text-gray-400">
+                        No deposit addresses set for this user
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

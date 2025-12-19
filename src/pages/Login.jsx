@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { authAPI } from '../services/api';
-import WalletConnect from '../components/WalletConnect';
+import MultiWalletConnect from '../components/MultiWalletConnect';
 
 export default function Login({ onLogin }) {
   const [isRegister, setIsRegister] = useState(false);
@@ -92,9 +92,9 @@ export default function Login({ onLogin }) {
           {/* Wallet Login */}
           {loginMethod === 'wallet' && !isRegister ? (
             <div className="space-y-4">
-              <WalletConnect onWalletLogin={handleWalletLogin} />
+              <MultiWalletConnect onWalletLogin={handleWalletLogin} />
               <div className="text-center text-gray-500 text-sm mt-4">
-                Connect your MetaMask wallet to login instantly
+                Connect any Web3 wallet to login instantly
               </div>
             </div>
           ) : (

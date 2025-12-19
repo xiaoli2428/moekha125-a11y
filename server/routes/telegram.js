@@ -23,6 +23,50 @@ router.post('/webhook', async (req, res) => {
 
     const text = message.text
 
+    // Check if this is a chat command: /chat <user_id> <message>
+    if (text.startsWith('/chat ')) {
+      const parts = text.slice(6).split(' ')
+      const userIdPrefix = parts[0]
+      const chatMessage = parts.slice(1).join(' ')
+
+      if (!userIdPrefix || !chatMessage) {
+        await sendTelegramMessage('❌ Usage: /chat <user_id> <message>\n\nExample: /chat abc123 Hello, how can I help you?')
+        return res.status(200).json({ ok: true })
+      }
+
+      // Find user by ID prefix
+      const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .ilike('id', `${userIdPrefix}%`)
+        .limit(1)
+
+      if (userError || !users || users.length === 0) {
+        await sendTelegramMessage(`❌ User not found with ID starting with: ${userIdPrefix}`)
+        return res.status(200).json({ ok: true })
+      }
+
+      const user = users[0]
+
+      // Add chat message
+      const { error: chatError } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: user.id,
+          message: chatMessage,
+          is_from_admin: true
+        })
+
+      if (chatError) {
+        console.error('Failed to send chat message:', chatError)
+        await sendTelegramMessage(`❌ Failed to send message: ${chatError.message}`)
+        return res.status(200).json({ ok: true })
+      }
+
+      await sendTelegramMessage(`✅ Message sent to user ${userIdPrefix}`)
+      return res.status(200).json({ ok: true })
+    }
+
     // Check if this is a reply command: /reply <ticket_id> <message>
     if (text.startsWith('/reply ')) {
       const parts = text.slice(7).split(' ')
@@ -143,18 +187,21 @@ router.post('/webhook', async (req, res) => {
 
     // Show help for unknown commands
     if (text.startsWith('/')) {
-      await sendTelegramMessage(`📋 <b>Available Commands:</b>
+      await sendTelegramMessage(`📋 Available Commands:
 
-/reply &lt;ticket_id&gt; &lt;message&gt;
-Reply to a customer ticket
+/chat <user_id> <message>
+Reply to live chat message
 
-/resolve &lt;ticket_id&gt;
+/reply <ticket_id> <message>
+Reply to a support ticket
+
+/resolve <ticket_id>
 Mark ticket as resolved
 
-/close &lt;ticket_id&gt;
+/close <ticket_id>
 Close a ticket
 
-<i>Ticket IDs are shown in notifications (first 8 characters)</i>`)
+IDs are shown in notifications (first 8 characters)`)
     }
 
     res.status(200).json({ ok: true })

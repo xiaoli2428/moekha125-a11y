@@ -55,18 +55,20 @@ ${ticket.message}
   return sendToTelegram(message)
 }
 
-export const notifyNewMessage = async (ticketId, message, user, isFromAdmin = false) => {
+export const notifyNewMessage = async (userId, message, user, isFromAdmin = false) => {
   if (isFromAdmin) return // Don't notify admin of their own messages
 
-  const telegramMessage = `💬 <b>New Customer Reply</b>
+  const telegramMessage = `💬 New Live Chat Message
 
-📋 <b>Ticket ID:</b> ${ticketId.slice(0, 8)}
-👤 <b>From:</b> ${user.username || user.email}
+User ID: ${userId}
+From: ${user.username || user.email}
 
-💬 <b>Message:</b>
+Message:
 ${message}
 
-⏰ <b>Time:</b> ${new Date().toLocaleString()}`
+Reply with: /chat ${userId} <your reply>
+
+Time: ${new Date().toLocaleString()}`
 
   return sendToTelegram(telegramMessage)
 }

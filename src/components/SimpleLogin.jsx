@@ -1,6 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const API_URL = 'https://moekha125-a11y.onrender.com/api';
+
+// Retry fetch with timeout and exponential backoff
+const fetchWithRetry = async (url, options = {}, retries = 3, timeout = 15000) => {
+  for (let i = 0; i < retries; i++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...options.headers
+        }
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.log(`Attempt ${i + 1}/${retries} failed:`, err.message);
+      
+      if (i === retries - 1) throw err;
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+    }
+  }
+};
 
 export default function SimpleLogin({ onLogin }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'wallet'
@@ -9,6 +40,7 @@ export default function SimpleLogin({ onLogin }) {
   const [success, setSuccess] = useState('');
   const [serverStatus, setServerStatus] = useState('checking');
   const [debugLog, setDebugLog] = useState([]);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Form fields
   const [email, setEmail] = useState('');
@@ -21,30 +53,51 @@ export default function SimpleLogin({ onLogin }) {
 
   const addLog = (msg) => {
     console.log(msg);
-    setDebugLog(prev => [...prev.slice(-10), `${new Date().toLocaleTimeString()}: ${msg}`]);
+    setDebugLog(prev => [...prev.slice(-15), `${new Date().toLocaleTimeString()}: ${msg}`]);
   };
+
+  // Check server with retry logic
+  const checkServer = useCallback(async () => {
+    setServerStatus('checking');
+    addLog('Checking server connection...');
+    
+    try {
+      const response = await fetchWithRetry(`${API_URL}/health`, {}, 3, 10000);
+      
+      if (response.ok) {
+        setServerStatus('online');
+        addLog('✅ Server online');
+        setRetryCount(0);
+        return true;
+      } else {
+        throw new Error(`Status: ${response.status}`);
+      }
+    } catch (err) {
+      const errorMsg = err.name === 'AbortError' ? 'Timeout' : err.message;
+      addLog(`❌ Server check failed: ${errorMsg}`);
+      setServerStatus('offline');
+      return false;
+    }
+  }, []);
 
   // Check server and ethereum on mount
   useEffect(() => {
     addLog('Component mounted');
-    // Check server
-    fetch(`${API_URL}/health`)
-      .then(r => {
-        addLog(`Health check: ${r.status}`);
-        return r.ok ? r.json() : Promise.reject();
-      })
-      .then(() => {
-        setServerStatus('online');
-        addLog('Server online');
-      })
-      .catch((e) => {
-        setServerStatus('offline');
-        addLog(`Server offline: ${e}`);
-      });
+    checkServer();
     
     // Check if ethereum is available
     setHasEthereum(typeof window !== 'undefined' && !!window.ethereum);
-  }, []);
+    
+    // Retry server check periodically if offline
+    const interval = setInterval(() => {
+      if (serverStatus === 'offline') {
+        setRetryCount(prev => prev + 1);
+        checkServer();
+      }
+    }, 30000); // Retry every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [checkServer, serverStatus]);
 
   // ========== EMAIL LOGIN ==========
   const handleEmailLogin = async (e) => {
@@ -60,15 +113,11 @@ export default function SimpleLogin({ onLogin }) {
     setError('');
     
     try {
-      addLog(`Sending login request to ${API_URL}/auth/login`);
-      const response = await fetch(`${API_URL}/auth/login`, {
+      addLog(`Sending login request...`);
+      const response = await fetchWithRetry(`${API_URL}/auth/login`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
         body: JSON.stringify({ email, password })
-      });
+      }, 3, 20000);
       
       addLog(`Response status: ${response.status}`);
       const data = await response.json();
@@ -86,7 +135,10 @@ export default function SimpleLogin({ onLogin }) {
       setTimeout(() => onLogin?.(data), 500);
     } catch (err) {
       addLog(`Login error: ${err.message}`);
-      setError(err.message || 'Network error - please try again');
+      const errorMsg = err.name === 'AbortError' 
+        ? 'Connection timeout. Please check your internet and try again.'
+        : err.message || 'Network error - please try again';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -110,15 +162,14 @@ export default function SimpleLogin({ onLogin }) {
     setError('');
     
     try {
-      console.log('📝 Attempting registration...');
-      const response = await fetch(`${API_URL}/auth/register`, {
+      addLog('📝 Attempting registration...');
+      const response = await fetchWithRetry(`${API_URL}/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
-      });
+      }, 3, 20000);
       
       const data = await response.json();
-      console.log('📝 Register response:', response.status);
+      addLog(`📝 Register response: ${response.status}`);
       
       if (!response.ok) {
         throw new Error(data.error || 'Registration failed');
@@ -128,8 +179,11 @@ export default function SimpleLogin({ onLogin }) {
       setMode('login');
       setPassword('');
     } catch (err) {
-      console.error('📝 Register error:', err);
-      setError(err.message);
+      addLog(`📝 Register error: ${err.message}`);
+      const errorMsg = err.name === 'AbortError' 
+        ? 'Connection timeout. Please check your internet and try again.'
+        : err.message || 'Network error - please try again';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -141,7 +195,7 @@ export default function SimpleLogin({ onLogin }) {
     setError('');
     
     try {
-      console.log('🔗 Starting wallet login...');
+      addLog('🔗 Starting wallet login...');
       
       // Check for ethereum provider
       if (!window.ethereum) {
@@ -149,7 +203,7 @@ export default function SimpleLogin({ onLogin }) {
       }
       
       // Request accounts
-      console.log('🔗 Requesting accounts...');
+      addLog('🔗 Requesting accounts...');
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
@@ -160,30 +214,29 @@ export default function SimpleLogin({ onLogin }) {
       
       const address = accounts[0];
       setWalletAddress(address);
-      console.log('🔗 Got address:', address);
+      addLog(`🔗 Got address: ${address.slice(0, 10)}...`);
       
       // Create message
       const timestamp = Date.now();
       const message = `Sign this message to authenticate with OnchainWeb.\n\nWallet: ${address}\nTimestamp: ${timestamp}`;
       
       // Request signature using personal_sign
-      console.log('🔗 Requesting signature...');
+      addLog('🔗 Requesting signature...');
       const signature = await window.ethereum.request({
         method: 'personal_sign',
         params: [message, address]
       });
       
-      console.log('🔗 Got signature, sending to backend...');
+      addLog('🔗 Got signature, sending to backend...');
       
-      // Send to backend
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
+      // Send to backend with retry
+      const response = await fetchWithRetry(`${API_URL}/auth/wallet-login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address, message, signature })
-      });
+      }, 3, 20000);
       
       const data = await response.json();
-      console.log('🔗 Backend response:', response.status);
+      addLog(`🔗 Backend response: ${response.status}`);
       
       if (!response.ok) {
         throw new Error(data.error || 'Wallet login failed');
@@ -197,13 +250,15 @@ export default function SimpleLogin({ onLogin }) {
       setTimeout(() => onLogin?.(data), 500);
       
     } catch (err) {
-      console.error('🔗 Wallet error:', err);
+      addLog(`🔗 Wallet error: ${err.message}`);
       
       // Handle user rejection
       if (err.code === 4001) {
         setError('You rejected the request. Please try again.');
       } else if (err.code === -32002) {
         setError('Request pending. Please check your wallet.');
+      } else if (err.name === 'AbortError') {
+        setError('Connection timeout. Please check your internet and try again.');
       } else {
         setError(err.message || 'Wallet connection failed');
       }
@@ -229,7 +284,7 @@ export default function SimpleLogin({ onLogin }) {
         </div>
 
         <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10">
-          {/* Server Status + Test Button */}
+          {/* Server Status + Retry/Test Buttons */}
           <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${
@@ -237,18 +292,27 @@ export default function SimpleLogin({ onLogin }) {
                 serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
               }`}></div>
               <span>Server: {serverStatus}</span>
+              {serverStatus === 'offline' && (
+                <button
+                  onClick={() => checkServer()}
+                  className="text-yellow-400 hover:text-yellow-300 underline ml-2"
+                >
+                  Retry
+                </button>
+              )}
             </div>
             <button
               onClick={async () => {
                 addLog('Testing API directly...');
                 try {
-                  const r = await fetch(`${API_URL}/health`);
+                  const r = await fetchWithRetry(`${API_URL}/health`, {}, 2, 15000);
                   const d = await r.json();
                   addLog(`API test result: ${JSON.stringify(d)}`);
                   alert(`API Test: ${r.ok ? 'SUCCESS' : 'FAILED'}\n${JSON.stringify(d)}`);
+                  if (r.ok) setServerStatus('online');
                 } catch (e) {
                   addLog(`API test error: ${e.message}`);
-                  alert(`API Test Error: ${e.message}`);
+                  alert(`API Test Error: ${e.message}\n\nIf server is blocked in your region, try using a VPN or contact support.`);
                 }
               }}
               className="text-blue-400 hover:text-blue-300 underline"
@@ -256,6 +320,15 @@ export default function SimpleLogin({ onLogin }) {
               Test API
             </button>
           </div>
+
+          {/* Offline Warning */}
+          {serverStatus === 'offline' && (
+            <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 rounded-lg p-3 mb-4 text-sm">
+              ⚠️ Server unreachable. This may be due to network restrictions in your region. 
+              Try using a VPN or different network connection.
+              {retryCount > 0 && <span className="ml-2">(Retry #{retryCount})</span>}
+            </div>
+          )}
 
           {/* Error */}
           {error && (

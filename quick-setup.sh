@@ -129,3 +129,7 @@ echo "   kill $BACKEND_PID $FRONTEND_PID"
 echo ""
 echo "🎊 ENJOY YOUR TRADING PLATFORM!"
 echo ""
+
+✓ 1520 modules transformed
+✓ built in 11.67s
+Output: dist/assets/index-BgnL12BO.js (NEW)

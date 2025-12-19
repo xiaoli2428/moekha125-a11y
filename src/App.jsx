@@ -10,7 +10,7 @@ import Wallet from './pages/Wallet';
 import Admin from './pages/Admin';
 import About from './pages/About';
 import Support from './pages/Support';
-import { walletAPI } from './services/api';
+import { authAPI } from './services/api';
 
 function AppLayout({ children, onLogout, userRole }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -81,14 +81,14 @@ function AppLayout({ children, onLogout, userRole }) {
       </nav>
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <main className="flex-1">{children}</main>
-      {userRole === 'admin' && (
+      {(userRole === 'admin' || userRole === 'master') && (
         <footer className="bg-black/30 border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 text-center">
             <Link
               to="/admin"
               className="text-xs text-gray-500 hover:text-gray-400 transition"
             >
-              Admin Panel
+              {userRole === 'master' ? 'Master Control Panel' : 'Admin Panel'}
             </Link>
           </div>
         </footer>
@@ -112,7 +112,7 @@ export default function App() {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const profile = await walletAPI.getProfile();
+        const profile = await authAPI.getProfile();
         setIsAuthenticated(true);
         setUserRole(profile.role);
       } catch (error) {
@@ -164,8 +164,8 @@ export default function App() {
                   <Route path="/wallet" element={<Wallet />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/support" element={<Support />} />
-                  {userRole === 'admin' && (
-                    <Route path="/admin" element={<Admin />} />
+                  {(userRole === 'admin' || userRole === 'master') && (
+                    <Route path="/admin" element={<Admin userRole={userRole} />} />
                   )}
                   <Route path="*" element={<Navigate to="/dashboard" />} />
                 </Routes>

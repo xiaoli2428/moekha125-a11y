@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminAPI, tradingAPI, chatAPI, coinsAPI } from '../services/api';
 
-export default function Admin() {
+export default function Admin({ userRole = 'admin' }) {
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [trades, setTrades] = useState([]);
@@ -19,7 +19,11 @@ export default function Admin() {
   const [userAddresses, setUserAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({ coin_symbol: '', network: '', address: '' });
   const [newCoin, setNewCoin] = useState({ symbol: '', name: '', networks: '' });
+  const [admins, setAdmins] = useState([]);
+  const [adminLogs, setAdminLogs] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const isMaster = userRole === 'master';
 
   useEffect(() => {
     loadData();
@@ -54,9 +58,36 @@ export default function Admin() {
       } else if (activeTab === 'coins') {
         const response = await coinsAPI.getAllCoins();
         setCoins(response.coins || []);
+      } else if (activeTab === 'admins' && isMaster) {
+        const response = await adminAPI.getAllAdmins();
+        setAdmins(response.admins || []);
+        const logsResponse = await adminAPI.getAdminLogs();
+        setAdminLogs(logsResponse.logs || []);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
+    }
+  };
+
+  const handlePromoteToAdmin = async (userId) => {
+    if (!confirm('Are you sure you want to promote this user to Admin?')) return;
+    try {
+      await adminAPI.promoteToAdmin(userId);
+      alert('User promoted to Admin successfully');
+      loadData();
+    } catch (error) {
+      alert(error.message || 'Failed to promote user');
+    }
+  };
+
+  const handleDemoteAdmin = async (userId) => {
+    if (!confirm('Are you sure you want to demote this admin to User?')) return;
+    try {
+      await adminAPI.demoteAdmin(userId);
+      alert('Admin demoted to User successfully');
+      loadData();
+    } catch (error) {
+      alert(error.message || 'Failed to demote admin');
     }
   };
 
@@ -126,7 +157,9 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          {isMaster ? 'Master Control Panel' : 'Admin Panel'}
+        </h1>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-8 border-b border-white/10 overflow-x-auto">
@@ -139,7 +172,8 @@ export default function Admin() {
             { key: 'ai-trades', label: 'AI Trades' },
             { key: 'chat', label: 'Live Chat' },
             { key: 'coins', label: 'Coins' },
-            { key: 'stats', label: 'Stats' }
+            { key: 'stats', label: 'Stats' },
+            ...(isMaster ? [{ key: 'admins', label: '👑 Admins' }] : [])
           ].map((tab) => (
             <button
               key={tab.key}
@@ -1155,6 +1189,153 @@ export default function Admin() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Admins Tab (Master Only) */}
+        {activeTab === 'admins' && isMaster && (
+          <div className="space-y-6">
+            {/* Admin List */}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <h2 className="text-xl font-bold mb-4">👑 Admin Management</h2>
+              <p className="text-gray-400 text-sm mb-6">
+                As Master, you can promote users to Admin or demote existing Admins.
+              </p>
+              
+              {/* Current Admins */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Current Admins</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left py-3 px-4">Email</th>
+                        <th className="text-left py-3 px-4">Username</th>
+                        <th className="text-left py-3 px-4">Role</th>
+                        <th className="text-left py-3 px-4">Status</th>
+                        <th className="text-left py-3 px-4">Created</th>
+                        <th className="text-left py-3 px-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {admins.map((admin) => (
+                        <tr key={admin.id} className="border-b border-white/5">
+                          <td className="py-3 px-4">{admin.email}</td>
+                          <td className="py-3 px-4 font-medium">{admin.username}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              admin.role === 'master' 
+                                ? 'bg-yellow-500/20 text-yellow-300' 
+                                : 'bg-purple-500/20 text-purple-300'
+                            }`}>
+                              {admin.role === 'master' ? '👑 Master' : 'Admin'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              admin.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                            }`}>
+                              {admin.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-400">
+                            {new Date(admin.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4">
+                            {admin.role === 'admin' && (
+                              <button
+                                onClick={() => handleDemoteAdmin(admin.id)}
+                                className="text-sm text-red-400 hover:text-red-300"
+                              >
+                                Demote to User
+                              </button>
+                            )}
+                            {admin.role === 'master' && (
+                              <span className="text-xs text-gray-500">Cannot modify</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Promote User to Admin */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Promote User to Admin</h3>
+                <div className="flex gap-3 items-center">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handlePromoteToAdmin(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg w-full md:w-64"
+                  >
+                    <option value="">Select a user to promote...</option>
+                    {users
+                      .filter(u => u.role === 'user')
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.email} ({user.username})
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Activity Logs */}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <h2 className="text-xl font-bold mb-4">📋 Admin Activity Logs</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-3 px-4">Time</th>
+                      <th className="text-left py-3 px-4">Admin</th>
+                      <th className="text-left py-3 px-4">Action</th>
+                      <th className="text-left py-3 px-4">Target User</th>
+                      <th className="text-left py-3 px-4">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-gray-400">
+                          No admin activity logs yet
+                        </td>
+                      </tr>
+                    ) : (
+                      adminLogs.map((log) => (
+                        <tr key={log.id} className="border-b border-white/5">
+                          <td className="py-3 px-4 text-sm text-gray-400">
+                            {new Date(log.created_at).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4">{log.admin?.email || 'Unknown'}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              log.action.includes('promote') ? 'bg-green-500/20 text-green-300' :
+                              log.action.includes('demote') ? 'bg-red-500/20 text-red-300' :
+                              'bg-gray-500/20 text-gray-300'
+                            }`}>
+                              {log.action.replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">{log.target?.email || 'N/A'}</td>
+                          <td className="py-3 px-4 text-sm text-gray-400">
+                            {JSON.stringify(log.details || {})}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

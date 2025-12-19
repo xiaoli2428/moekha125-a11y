@@ -20,9 +20,13 @@ import {
   getArbitrageTrades,
   settleArbitrageTrade,
   getAllKYCSubmissions,
-  reviewKYC
+  reviewKYC,
+  getAllAdmins,
+  promoteToAdmin,
+  demoteAdmin,
+  getAdminLogs
 } from '../controllers/adminController.js'
-import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { authenticate, requireAdmin, requireMaster } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -60,5 +64,11 @@ router.post('/arbitrage-trades/:id/settle', settleArbitrageTrade)
 // KYC management
 router.get('/kyc', getAllKYCSubmissions)
 router.post('/kyc/:id/review', reviewKYC)
+
+// Master admin routes (require master role)
+router.get('/admins', requireMaster, getAllAdmins)
+router.post('/admins/promote/:userId', requireMaster, promoteToAdmin)
+router.post('/admins/demote/:userId', requireMaster, demoteAdmin)
+router.get('/admins/logs', requireMaster, getAdminLogs)
 
 export default router

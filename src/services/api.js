@@ -211,6 +211,22 @@ export const adminAPI = {
       body: JSON.stringify({ status, admin_notes })
     }),
 
+  // Master admin - Admin management
+  getAllAdmins: () => apiCall('/admin/admins'),
+  
+  promoteToAdmin: (userId) =>
+    apiCall(`/admin/admins/promote/${userId}`, {
+      method: 'POST'
+    }),
+  
+  demoteAdmin: (userId) =>
+    apiCall(`/admin/admins/demote/${userId}`, {
+      method: 'POST'
+    }),
+  
+  getAdminLogs: (limit = 100, offset = 0) =>
+    apiCall(`/admin/admins/logs?limit=${limit}&offset=${offset}`),
+
   // Arbitrage
   createArbitrageSetting: (settings) =>
     apiCall('/arbitrage/settings', {

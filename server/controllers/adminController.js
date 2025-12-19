@@ -669,6 +669,162 @@ export const getAllTickets = async (req, res) => {
   }
 }
 
+// ==================== MASTER ADMIN FUNCTIONS ====================
+
+// Get all admin accounts (master only)
+export const getAllAdmins = async (req, res) => {
+  try {
+    const { data: admins, error } = await supabase
+      .from('users')
+      .select('id, email, username, role, status, created_at, last_login')
+      .in('role', ['admin', 'master'])
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to fetch admins' })
+    }
+
+    res.json({ admins })
+  } catch (error) {
+    console.error('Get all admins error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
+// Promote user to admin (master only)
+export const promoteToAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    // Check if user exists
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('id, email, username, role')
+      .eq('id', userId)
+      .single()
+
+    if (fetchError || !user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (user.role === 'master') {
+      return res.status(400).json({ error: 'Cannot modify master account' })
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ error: 'User is already an admin' })
+    }
+
+    // Promote to admin
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update({ role: 'admin' })
+      .eq('id', userId)
+      .select('id, email, username, role')
+      .single()
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to promote user' })
+    }
+
+    // Log the action
+    await supabase.from('admin_logs').insert({
+      admin_id: req.user.id,
+      action: 'promote_to_admin',
+      target_user_id: userId,
+      details: { previous_role: user.role }
+    })
+
+    res.json({ 
+      message: 'User promoted to admin successfully', 
+      user: updatedUser 
+    })
+  } catch (error) {
+    console.error('Promote to admin error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
+// Demote admin to user (master only)
+export const demoteAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    // Check if admin exists
+    const { data: admin, error: fetchError } = await supabase
+      .from('users')
+      .select('id, email, username, role')
+      .eq('id', userId)
+      .single()
+
+    if (fetchError || !admin) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (admin.role === 'master') {
+      return res.status(400).json({ error: 'Cannot demote master account' })
+    }
+
+    if (admin.role !== 'admin') {
+      return res.status(400).json({ error: 'User is not an admin' })
+    }
+
+    // Demote to user
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update({ role: 'user' })
+      .eq('id', userId)
+      .select('id, email, username, role')
+      .single()
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to demote admin' })
+    }
+
+    // Log the action
+    await supabase.from('admin_logs').insert({
+      admin_id: req.user.id,
+      action: 'demote_admin',
+      target_user_id: userId,
+      details: { previous_role: 'admin' }
+    })
+
+    res.json({ 
+      message: 'Admin demoted to user successfully', 
+      user: updatedUser 
+    })
+  } catch (error) {
+    console.error('Demote admin error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
+// Get admin activity logs (master only)
+export const getAdminLogs = async (req, res) => {
+  try {
+    const { limit = 100, offset = 0 } = req.query
+
+    const { data: logs, error, count } = await supabase
+      .from('admin_logs')
+      .select(`
+        *,
+        admin:users!admin_logs_admin_id_fkey(id, email, username),
+        target:users!admin_logs_target_user_id_fkey(id, email, username)
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1)
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to fetch admin logs' })
+    }
+
+    res.json({ logs, total: count })
+  } catch (error) {
+    console.error('Get admin logs error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
 // Export KYC functions
 export { getAllKYCSubmissions, reviewKYC } from './kycController.js'
 
@@ -679,5 +835,9 @@ export default {
   updateUserCreditScore,
   updateUserStatus,
   getDashboardStats,
-  getAllTickets
+  getAllTickets,
+  getAllAdmins,
+  promoteToAdmin,
+  demoteAdmin,
+  getAdminLogs
 }

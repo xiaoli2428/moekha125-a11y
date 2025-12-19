@@ -40,10 +40,17 @@ export const authenticate = async (req, res, next) => {
 }
 
 export const requireAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'master')) {
     return res.status(403).json({ error: 'Admin access required' })
   }
   next()
 }
 
-export default { authenticate, requireAdmin }
+export const requireMaster = (req, res, next) => {
+  if (!req.user || req.user.role !== 'master') {
+    return res.status(403).json({ error: 'Master admin access required' })
+  }
+  next()
+}
+
+export default { authenticate, requireAdmin, requireMaster }

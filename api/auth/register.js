@@ -2,12 +2,17 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Validate env vars at startup
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
 
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
+// Check if URL looks valid (should start with https)
+const supabaseUrl = SUPABASE_URL.startsWith('https://') 
+  ? SUPABASE_URL 
+  : `https://${SUPABASE_URL}`;
+
+const supabase = createClient(supabaseUrl, SUPABASE_KEY);
 
 function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
@@ -72,7 +77,13 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Registration error:', error);
-      return res.status(500).json({ error: 'Failed to create user' });
+      // Return more detail for debugging
+      return res.status(500).json({ 
+        error: 'Failed to create user',
+        detail: error.message,
+        code: error.code,
+        hint: error.hint
+      });
     }
 
     // Generate token

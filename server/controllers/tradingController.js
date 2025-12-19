@@ -1,18 +1,27 @@
 import supabase from '../config/database.js'
+import { getPrice } from '../services/priceService.js'
 
-// Mock price data for simulation
-const MOCK_PRICES = {
+// Get real-time price for a pair
+const getRealTimePrice = async (pair) => {
+  try {
+    const priceData = await getPrice(pair);
+    if (priceData && priceData.price) {
+      return priceData.price;
+    }
+    // Fallback to cached/default prices
+    return FALLBACK_PRICES[pair] || 100;
+  } catch (error) {
+    console.error('Error getting real-time price:', error);
+    return FALLBACK_PRICES[pair] || 100;
+  }
+};
+
+// Fallback prices in case API fails
+const FALLBACK_PRICES = {
   'BTC/USDT': 43500,
   'ETH/USDT': 2300,
   'BNB/USDT': 320,
   'SOL/USDT': 98
-}
-
-const getPriceMovement = (pair) => {
-  // Simulate random price movement between -2% to +2%
-  const basePrice = MOCK_PRICES[pair] || 100
-  const movement = (Math.random() - 0.5) * 0.04 // -2% to +2%
-  return basePrice * (1 + movement)
 }
 
 export const placeTrade = async (req, res) => {
@@ -58,8 +67,8 @@ export const placeTrade = async (req, res) => {
       .update({ balance: newBalance })
       .eq('id', userId)
 
-    // Get entry price
-    const entryPrice = getPriceMovement(pair)
+    // Get real-time entry price
+    const entryPrice = await getRealTimePrice(pair)
     const expiresAt = new Date(Date.now() + duration * 1000)
 
     // Create trade
@@ -132,8 +141,8 @@ export const settleTrade = async (tradeId) => {
       return // Already settled
     }
 
-    // Get exit price
-    const exitPrice = getPriceMovement(trade.pair)
+    // Get real-time exit price
+    const exitPrice = await getRealTimePrice(trade.pair)
 
     // Determine win/loss
     let result

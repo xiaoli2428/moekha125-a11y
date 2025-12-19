@@ -327,6 +327,23 @@ export const coinsAPI = {
     })
 };
 
+// Market API - Real-time prices and charts
+export const marketAPI = {
+  // Get all prices
+  getAllPrices: () => apiCall('/market/prices'),
+
+  // Get price for a specific pair
+  getPrice: (pair) => apiCall(`/market/price/${pair.replace('/', '-')}`),
+
+  // Get OHLCV (candlestick) data
+  getOHLCV: (pair, days = 1) => 
+    apiCall(`/market/ohlcv/${pair.replace('/', '-')}?days=${days}`),
+
+  // Get market chart data
+  getChart: (pair, days = 1) => 
+    apiCall(`/market/chart/${pair.replace('/', '-')}?days=${days}`)
+};
+
 export default {
   auth: authAPI,
   wallet: walletAPI,
@@ -334,5 +351,6 @@ export default {
   support: supportAPI,
   admin: adminAPI,
   chat: chatAPI,
-  coins: coinsAPI
+  coins: coinsAPI,
+  market: marketAPI
 }

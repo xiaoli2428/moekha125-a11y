@@ -11,6 +11,7 @@ import kycRoutes from './routes/kyc.js'
 import telegramRoutes from './routes/telegram.js'
 import chatRoutes from './routes/chat.js'
 import coinsRoutes from './routes/coins.js'
+import marketRoutes from './routes/market.js'
 import { settleExpiredTrades } from './controllers/tradingController.js'
 import { executeArbitrage } from './controllers/arbitrageController.js'
 import supabase from './config/database.js'
@@ -26,6 +27,7 @@ app.use(cors({
     'http://localhost:5173',
     'https://dist-vert-phi.vercel.app',
     'https://moekha125-a11y.vercel.app',
+    'https://onchainweb.app',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true
@@ -49,6 +51,7 @@ app.use('/api/kyc', kycRoutes)
 app.use('/api/telegram', telegramRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/coins', coinsRoutes)
+app.use('/api/market', marketRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const supabase = createClient(
@@ -31,37 +30,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, wallet_address } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if (!email && !wallet_address) {
+      return res.status(400).json({ error: 'Email or wallet address required' });
     }
 
-    // Find user
-    const { data: user, error } = await supabase
+    // Find user by email or wallet
+    let query = supabase
       .from('users')
-      .select('id, email, username, password_hash, role, balance, status, credit_score')
-      .eq('email', email)
-      .maybeSingle();
+      .select('id, email, username, wallet_address, role, short_uid, created_at, last_seen');
+    
+    if (email) {
+      query = query.eq('email', email);
+    } else {
+      query = query.ilike('wallet_address', wallet_address);
+    }
+    
+    const { data: user, error } = await query.maybeSingle();
 
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (error) {
+      console.error('Login query error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check status
-    if (user.status !== 'active') {
-      return res.status(403).json({ error: 'Account is suspended' });
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    // Update last_seen
+    await supabase
+      .from('users')
+      .update({ last_seen: new Date().toISOString() })
+      .eq('id', user.id);
 
     // Generate token
-    const token = generateToken({ userId: user.id, role: user.role });
+    const token = generateToken({ userId: user.id, role: user.role || 'user' });
 
     res.status(200).json({
       message: 'Login successful',
@@ -70,9 +74,9 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role,
-        balance: user.balance,
-        creditScore: user.credit_score
+        walletAddress: user.wallet_address,
+        role: user.role || 'user',
+        shortUid: user.short_uid
       }
     });
   } catch (error) {

@@ -1,21 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Validate env vars at startup
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-// Check if URL looks valid (should start with https)
-const supabaseUrl = SUPABASE_URL.startsWith('https://') 
-  ? SUPABASE_URL 
-  : `https://${SUPABASE_URL}`;
-
-const supabase = createClient(supabaseUrl, SUPABASE_KEY);
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
 
 function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+function generateShortUID() {
+  return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
 function setCorsHeaders(res) {
@@ -36,53 +34,48 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, username } = req.body;
+    const { email, username, wallet_address } = req.body;
 
-    if (!email || !password || !username) {
-      return res.status(400).json({ error: 'Email, password, and username are required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    // At least email or wallet_address required
+    if (!email && !wallet_address) {
+      return res.status(400).json({ error: 'Email or wallet address is required' });
     }
 
     // Check if user already exists
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .or(`email.eq.${email},username.eq.${username}`)
-      .maybeSingle();
+    let query = supabase.from('users').select('id');
+    if (email && wallet_address) {
+      query = query.or(`email.eq.${email},wallet_address.ilike.${wallet_address}`);
+    } else if (email) {
+      query = query.eq('email', email);
+    } else {
+      query = query.ilike('wallet_address', wallet_address);
+    }
+    
+    const { data: existing } = await query.maybeSingle();
 
     if (existing) {
-      return res.status(400).json({ error: 'Email or username already exists' });
+      return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create user
+    // Create user - matching actual DB schema
     const { data: user, error } = await supabase
       .from('users')
       .insert({
-        email,
-        password_hash: passwordHash,
-        username,
+        email: email || null,
+        wallet_address: wallet_address ? wallet_address.toLowerCase() : null,
+        username: username || email?.split('@')[0] || `user_${generateShortUID()}`,
+        short_uid: generateShortUID(),
         role: 'user',
-        balance: 0,
-        status: 'active',
-        credit_score: 100
+        profile_data: {}
       })
-      .select('id, email, username, role, balance, credit_score, created_at')
+      .select('id, email, username, wallet_address, role, short_uid, created_at')
       .single();
 
     if (error) {
       console.error('Registration error:', error);
-      // Return more detail for debugging
       return res.status(500).json({ 
         error: 'Failed to create user',
-        detail: error.message,
-        code: error.code,
-        hint: error.hint
+        detail: error.message
       });
     }
 
@@ -96,9 +89,9 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email,
         username: user.username,
+        walletAddress: user.wallet_address,
         role: user.role,
-        balance: user.balance,
-        creditScore: user.credit_score
+        shortUid: user.short_uid
       }
     });
   } catch (error) {

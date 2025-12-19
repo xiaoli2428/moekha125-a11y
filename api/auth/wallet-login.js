@@ -13,6 +13,10 @@ function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
+function generateShortUID() {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -53,45 +57,42 @@ export default async function handler(req, res) {
     // Check if user with this wallet address exists
     let { data: user, error } = await supabase
       .from('users')
-      .select('id, email, username, role, balance, status, credit_score, wallet_address')
-      .eq('wallet_address', address.toLowerCase())
+      .select('id, email, username, wallet_address, role, short_uid, created_at')
+      .ilike('wallet_address', address)
       .maybeSingle();
 
     // If user doesn't exist, create a new one
     if (!user) {
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;
-      const email = `${address.toLowerCase()}@wallet.onchainweb`;
       
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
-          email,
           username,
           wallet_address: address.toLowerCase(),
-          password_hash: 'wallet_auth',
+          short_uid: generateShortUID(),
           role: 'user',
-          balance: 0,
-          status: 'active',
-          credit_score: 100
+          profile_data: {}
         })
-        .select('id, email, username, role, balance, status, credit_score, wallet_address')
+        .select('id, email, username, wallet_address, role, short_uid, created_at')
         .single();
 
       if (createError) {
-        console.error('Wallet user creation error:', createError);
-        return res.status(500).json({ error: 'Failed to create wallet user' });
+        console.error('Create wallet user error:', createError);
+        return res.status(500).json({ error: 'Failed to create user', detail: createError.message });
       }
 
       user = newUser;
-    }
-
-    // Check status
-    if (user.status !== 'active') {
-      return res.status(403).json({ error: 'Account is suspended' });
+    } else {
+      // Update last_seen for existing user
+      await supabase
+        .from('users')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', user.id);
     }
 
     // Generate token
-    const token = generateToken({ userId: user.id, role: user.role });
+    const token = generateToken({ userId: user.id, role: user.role || 'user' });
 
     res.status(200).json({
       message: 'Wallet login successful',
@@ -100,10 +101,9 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role,
-        balance: user.balance,
-        creditScore: user.credit_score,
-        walletAddress: user.wallet_address
+        walletAddress: user.wallet_address,
+        role: user.role || 'user',
+        shortUid: user.short_uid
       }
     });
   } catch (error) {

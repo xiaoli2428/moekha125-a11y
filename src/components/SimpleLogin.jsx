@@ -4,15 +4,9 @@ import { useState, useEffect } from 'react';
 const API_URL = '/api';
 
 export default function SimpleLogin({ onLogin }) {
-  const [mode, setMode] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
-  // Form fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
   
   // Wallet state
   const [walletAddress, setWalletAddress] = useState('');
@@ -22,82 +16,6 @@ export default function SimpleLogin({ onLogin }) {
     // Check if ethereum is available
     setHasEthereum(typeof window !== 'undefined' && !!window.ethereum);
   }, []);
-
-  // ========== EMAIL LOGIN ==========
-  const handleEmailLogin = async (e) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
-    }
-    
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-      
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      setSuccess('Login successful!');
-      setTimeout(() => onLogin?.(data), 500);
-    } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ========== EMAIL REGISTER ==========
-  const handleEmailRegister = async (e) => {
-    e.preventDefault();
-    
-    if (!username || !email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-    
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-      
-      setSuccess('Account created! Please login.');
-      setMode('login');
-      setPassword('');
-    } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // ========== WALLET LOGIN ==========
   const handleWalletLogin = async () => {
@@ -149,7 +67,7 @@ export default function SimpleLogin({ onLogin }) {
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('walletAddress', address);
       
-      setSuccess('Wallet connected!');
+      setSuccess('Wallet connected successfully!');
       setTimeout(() => onLogin?.(data), 500);
       
     } catch (err) {
@@ -168,6 +86,27 @@ export default function SimpleLogin({ onLogin }) {
   const isMobile = typeof window !== 'undefined' && 
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+  const getWalletDeepLinks = () => {
+    const currentUrl = encodeURIComponent(window.location.href);
+    return [
+      {
+        name: 'Coinbase Wallet',
+        icon: '🔵',
+        url: `https://go.cb-w.com/dapp?cb_url=${currentUrl}`
+      },
+      {
+        name: 'MetaMask',
+        icon: '🦊',
+        url: `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`
+      },
+      {
+        name: 'Trust Wallet',
+        icon: '🛡️',
+        url: `https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}`
+      }
+    ];
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -175,9 +114,7 @@ export default function SimpleLogin({ onLogin }) {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">OnchainWeb</h1>
           <p className="text-gray-400 text-sm">
-            {mode === 'login' && 'Login to your account'}
-            {mode === 'register' && 'Create a new account'}
-            {mode === 'wallet' && 'Connect your wallet'}
+            Connect your wallet to get started
           </p>
         </div>
 
@@ -196,216 +133,104 @@ export default function SimpleLogin({ onLogin }) {
             </div>
           )}
 
-          {/* Mode Tabs */}
-          <div className="flex mb-6 bg-white/5 rounded-lg p-1">
-            <button
-              onClick={() => { setMode('login'); setError(''); }}
-              className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
-                mode === 'login' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => { setMode('register'); setError(''); }}
-              className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
-                mode === 'register' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Register
-            </button>
-            <button
-              onClick={() => { setMode('wallet'); setError(''); }}
-              className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
-                mode === 'wallet' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Wallet
-            </button>
-          </div>
-
-          {/* ========== LOGIN FORM ========== */}
-          {mode === 'login' && (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  placeholder="your@email.com"
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  placeholder="••••••••"
-                  disabled={loading}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-white font-semibold hover:opacity-90 transition disabled:opacity-50"
-              >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
+          {/* Connected wallet display */}
+          {walletAddress && (
+            <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-3 mb-4 text-center">
+              <span className="text-purple-300 text-sm">
+                Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+              </span>
+            </div>
           )}
 
-          {/* ========== REGISTER FORM ========== */}
-          {mode === 'register' && (
-            <form onSubmit={handleEmailRegister} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  placeholder="username"
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  placeholder="your@email.com"
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                  placeholder="At least 6 characters"
-                  disabled={loading}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-white font-semibold hover:opacity-90 transition disabled:opacity-50"
-              >
-                {loading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
-          )}
-
-          {/* ========== WALLET SECTION ========== */}
-          {mode === 'wallet' && (
-            <div className="space-y-4">
-              {hasEthereum ? (
-                <div className="space-y-4">
-                  {walletAddress && (
-                    <div className="text-center text-sm text-gray-400">
-                      Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                    </div>
-                  )}
-                  
-                  <button
-                    onClick={handleWalletLogin}
-                    disabled={loading}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-white font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="animate-spin">⟳</span>
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        🔗 Connect & Sign
-                      </>
-                    )}
-                  </button>
-                  
-                  <p className="text-xs text-gray-500 text-center">
-                    Click to connect your wallet and sign a message to login
-                  </p>
-                </div>
+          {/* Main wallet connect button */}
+          {hasEthereum ? (
+            <button
+              onClick={handleWalletLogin}
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg font-semibold text-white flex items-center justify-center gap-3 hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                  Connecting...
+                </>
               ) : (
-                <div className="space-y-4">
-                  {isMobile ? (
-                    <div className="space-y-3">
-                      <p className="text-gray-400 text-sm text-center mb-4">
-                        Open this page in your wallet app:
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <a
-                          href={`https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`}
-                          className="py-3 bg-orange-500/20 border border-orange-500/30 rounded-lg text-sm text-center hover:bg-orange-500/30 transition"
-                        >
-                          🦊 MetaMask
-                        </a>
-                        <a
-                          href={`https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`}
-                          className="py-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-sm text-center hover:bg-blue-500/30 transition"
-                        >
-                          💰 Coinbase
-                        </a>
-                        <a
-                          href={`https://link.trustwallet.com/open_url?url=${encodeURIComponent(window.location.href)}`}
-                          className="py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-sm text-center hover:bg-cyan-500/30 transition"
-                        >
-                          🛡️ Trust
-                        </a>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(window.location.href);
-                            setSuccess('URL copied! Paste in your wallet browser.');
-                            setTimeout(() => setSuccess(''), 3000);
-                          }}
-                          className="py-3 bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm hover:bg-purple-500/30 transition"
-                        >
-                          📋 Copy URL
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center space-y-4">
-                      <p className="text-gray-400 text-sm">
-                        Please install a Web3 wallet extension like MetaMask to continue.
-                      </p>
-                      <a
-                        href="https://metamask.io/download/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block py-3 px-6 bg-orange-500/20 border border-orange-500/30 rounded-lg text-sm hover:bg-orange-500/30 transition"
-                      >
-                        🦊 Install MetaMask
-                      </a>
-                    </div>
-                  )}
-                </div>
+                <>
+                  <span className="text-2xl">🔗</span>
+                  Connect Wallet
+                </>
               )}
-
-              <p className="text-xs text-gray-500 text-center mt-4">
-                No registration required for wallet login
+            </button>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-4">
+                {isMobile 
+                  ? 'Open this page in your wallet app to connect' 
+                  : 'Install a wallet extension like MetaMask to connect'}
               </p>
             </div>
           )}
+
+          {/* Mobile deep links */}
+          {isMobile && !hasEthereum && (
+            <div className="mt-4">
+              <p className="text-gray-400 text-xs text-center mb-3">
+                Or open with your wallet app:
+              </p>
+              <div className="space-y-2">
+                {getWalletDeepLinks().map((wallet) => (
+                  <a
+                    key={wallet.name}
+                    href={wallet.url}
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
+                  >
+                    <span>{wallet.icon}</span>
+                    <span>{wallet.name}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Desktop install links */}
+          {!isMobile && !hasEthereum && (
+            <div className="mt-4">
+              <p className="text-gray-400 text-xs text-center mb-3">
+                Get a wallet:
+              </p>
+              <div className="flex gap-2 justify-center">
+                <a
+                  href="https://metamask.io/download/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-white/10 rounded-lg text-white text-sm hover:bg-white/20 transition-colors"
+                >
+                  MetaMask
+                </a>
+                <a
+                  href="https://www.coinbase.com/wallet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-white/10 rounded-lg text-white text-sm hover:bg-white/20 transition-colors"
+                >
+                  Coinbase Wallet
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Footer text */}
+          <p className="text-gray-500 text-xs text-center mt-6">
+            By connecting, you agree to our Terms of Service
+          </p>
         </div>
 
-        {/* Help text */}
-        <p className="text-center text-gray-500 text-xs mt-4">
-          {mode === 'login' && 'Need an account? Switch to Register tab'}
-          {mode === 'register' && 'Already have an account? Switch to Login tab'}
-          {mode === 'wallet' && 'Connect any Web3 wallet to get started'}
-        </p>
+        {/* Help link */}
+        <div className="text-center mt-4">
+          <p className="text-gray-500 text-xs">
+            Having trouble? Make sure you're using a supported wallet
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -2,23 +2,23 @@
   "name": "onchainweb",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.6.0",
-    "@vercel/speed-insights": "^1.3.1",
+    "@web3modal/ethers5": "^5.1.11",
+    "ethers": "^5.7.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24",
     "tailwindcss": "^3.4.8",
-    "vite": "^7.3.0"
+    "vite": "^5.0.0"
   }
 }

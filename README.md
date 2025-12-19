@@ -1,48 +1,155 @@
-# Onchainweb — Home page (minimal)
+# Onchainweb - Full Stack Trading Platform
 
-This is a minimal React + Vite + Tailwind starter that reproduces a DeFi-style homepage inspired by the screenshot and ddefi3.com. Project name: Onchainweb.
+A complete DeFi-style trading platform with wallet management, binary options trading, AI arbitrage, and customer support.
 
-**Live URL:** [www.onchainweb.app](https://www.onchainweb.app/)
+## 🚀 Features
 
-## Quick start
+### User Features
+- 🔐 **Authentication**: Secure JWT-based auth with registration/login
+- 💰 **Wallet Management**: Deposit, withdraw, transfer funds
+- 📈 **Binary Trading**: Time-based options trading with 85% payout
+- 🎫 **Customer Support**: Create and track support tickets
+- 📊 **Transaction History**: Complete audit trail of all operations
+- 👤 **User Profile**: Balance, credit score, account management
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### Admin Features
+- 📊 **Dashboard**: Real-time platform statistics
+- 👥 **User Management**: View, suspend, modify user balances
+- 🤖 **AI Arbitrage Control**: Configure and monitor automated trading bots
+- 💬 **Support Management**: Respond to user tickets
+- 📈 **Analytics**: Trade statistics and platform metrics
 
-2. **Run dev server:**
-   ```bash
-   npm run dev
-   ```
-   Opens on `http://localhost:5173`
+## 🛠 Tech Stack
 
-3. **Build for production:**
-   ```bash
-   npm run build
-   ```
-   Output: `dist/` folder
+### Frontend
+- React 18.2.0 + Vite 5.0.0 + Tailwind CSS 3.4.8
 
-4. **Preview production build:**
-   ```bash
-   npm run preview
-   ```
-   Opens on `http://localhost:4173`
+### Backend
+- Node.js + Express.js
+- Supabase (PostgreSQL)
+- JWT Authentication + bcrypt
 
-## Deployment
+## 📦 Quick Start
 
-After running `npm run build`, the `dist/` folder contains the production-ready static files. Deploy to any static hosting service:
+### Prerequisites
+- Node.js 18+ and npm
+- Supabase account (free tier)
 
-- **Netlify**: Drag & drop `dist/` folder or connect GitHub repo. A `netlify.toml` is included to set the build command, publish folder, security headers, and long-term caching for `assets/`.
-- **Vercel**: Import project and it auto-detects Vite
-- **GitHub Pages**: Use `gh-pages` package or GitHub Actions
-- **Other**: Any static hosting (S3, Cloudflare Pages, etc.)
+### 1. Install Dependencies
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed steps and post-deploy checks. Azure Pipelines is configured to run `npm ci`, a production-focused `npm audit`, and the production build on pushes to `main` and pull requests.
+```bash
+# Frontend
+npm install
 
-## Notes
+# Backend
+cd server && npm install && cd ..
+```
 
-- The UI uses mock data for balances and markets. Real price feeds, on-chain data, and wallet connect (MetaMask, WalletConnect, wagmi) can be integrated on request.
-- Project uses ESM ("type": "module" in package.json)
-- Vite 6.x for optimal performance and security
-- Dependencies should be audited regularly; this repository enables Dependabot (see .github/dependabot.yml). Run `npm audit` locally and review Dependabot PRs to keep dependencies secure.
+### 2. Setup Database
+
+1. Create account at [supabase.com](https://supabase.com)
+2. Create new project
+3. Go to SQL Editor and run `server/database/schema.sql`
+4. Get API credentials from Settings → API
+
+### 3. Configure Environment
+
+Create `server/.env`:
+```env
+PORT=3001
+NODE_ENV=development
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_KEY=your_service_key
+JWT_SECRET=generate_random_64_character_string
+JWT_EXPIRES_IN=7d
+FRONTEND_URL=http://localhost:5173
+```
+
+### 4. Run Development
+
+Terminal 1 - Backend:
+```bash
+cd server && npm run dev
+```
+
+Terminal 2 - Frontend:
+```bash
+npm run dev
+```
+
+Open http://localhost:5173
+
+## 🚀 Deployment
+
+See `DEPLOYMENT.md` for complete guide.
+
+**Quick Deploy:**
+- Frontend: Vercel
+- Backend: Railway or Render  
+- Database: Supabase
+
+## 📚 Documentation
+
+- `README.md` - This file
+- `server/README.md` - Complete API documentation
+- `DEPLOYMENT.md` - Deployment guide
+- `.github/copilot-instructions.md` - Development patterns
+
+## 🔒 Security
+
+- Bcrypt password hashing (10 rounds)
+- JWT token authentication
+- Role-based access control
+- Account suspension/banning
+- CORS protection
+- SQL injection protection
+- Transaction audit trail
+
+## 🤖 Background Jobs
+
+- **Trade Settlement**: Every 10 seconds
+- **AI Arbitrage**: Every 30 seconds
+
+## 📁 Structure
+
+```
+onchainweb/
+├── src/                # Frontend
+│   ├── components/     # UI components
+│   └── services/       # API client
+├── server/            # Backend
+│   ├── controllers/   # Business logic
+│   ├── routes/        # API endpoints
+│   ├── middleware/    # Auth
+│   ├── config/        # DB & JWT
+│   └── database/      # Schema
+└── DEPLOYMENT.md      # Deploy guide
+```
+
+## 🔧 Environment Variables
+
+**Frontend**: `VITE_API_URL`  
+**Backend**: See `server/.env.example`
+
+## 📝 Scripts
+
+Frontend:
+- `npm run dev` - Dev server
+- `npm run build` - Production build
+
+Backend:
+- `npm run dev` - Dev with auto-reload
+- `npm start` - Production
+
+## 🐛 Troubleshooting
+
+See `DEPLOYMENT.md` troubleshooting section.
+
+## 📄 License
+
+MIT License
+
+---
+
+Built with ❤️ using React, Node.js, and Supabase

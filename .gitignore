@@ -1,21 +1,8 @@
 # Dependencies
-node_modules/
+node_modules
 
 # Build output
-dist/
-build/
-dist-ssr/
-*.local
-
-# Editor directories and files
-.vscode/
-.idea/
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+dist
 
 # Logs
 logs
@@ -25,3 +12,21 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment
+.env
+.env.local
+.env.*.local
+.vercel
+.env*.local

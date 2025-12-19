@@ -1,0 +1,50 @@
+.
+├── DEPLOYMENT.md
+├── GETTING_STARTED.md
+├── PROJECT_STRUCTURE.txt
+├── README.md
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.cjs
+├── server
+│   ├── README.md
+│   ├── config
+│   │   ├── database.js
+│   │   └── jwt.js
+│   ├── controllers
+│   │   ├── adminController.js
+│   │   ├── arbitrageController.js
+│   │   ├── authController.js
+│   │   ├── supportController.js
+│   │   ├── tradingController.js
+│   │   └── walletController.js
+│   ├── database
+│   │   └── schema.sql
+│   ├── index.js
+│   ├── middleware
+│   │   └── auth.js
+│   ├── package.json
+│   └── routes
+│       ├── admin.js
+│       ├── arbitrage.js
+│       ├── auth.js
+│       ├── support.js
+│       ├── trading.js
+│       └── wallet.js
+├── setup.sh
+├── src
+│   ├── App.jsx
+│   ├── components
+│   │   ├── Features.jsx
+│   │   ├── Footer.jsx
+│   │   ├── Header.jsx
+│   │   └── Hero.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── services
+│       └── api.js
+├── tailwind.config.cjs
+└── vite.config.js
+
+10 directories, 38 files

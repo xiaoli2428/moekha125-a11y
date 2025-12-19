@@ -1,11 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
-  plugins: [react(), vue()],
-  build: {
-    outDir: 'dist',
-    sourcemap: true
+  plugins: [react()],
+  base: '/',
+  resolve: {
+    alias: {
+      // Web3Modal uses 'ethers5' internally but we have 'ethers' installed
+      'ethers5': 'ethers'
+    }
+  },
+  optimizeDeps: {
+    include: ['ethers', '@web3modal/ethers5']
   }
 })

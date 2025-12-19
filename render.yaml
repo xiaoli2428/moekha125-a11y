@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: onchainweb-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: your_supabase_url
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        value: your_key
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        value: your_key
+        sync: false
+      - key: JWT_SECRET
+        value: your_secret
+        sync: false
+      - key: FRONTEND_URL
+        value: https://your-app.vercel.app
+      - key: VITE_API_URL
+        value: https://onchainweb-api.onrender.com/api

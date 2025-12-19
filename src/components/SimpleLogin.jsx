@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://moekha125-a11y.onrender.com/api';
+// Use relative path - will work on same domain (Vercel)
+const API_URL = '/api';
 
 export default function SimpleLogin({ onLogin }) {
   const [mode, setMode] = useState('login');

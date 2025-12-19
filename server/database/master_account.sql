@@ -6,7 +6,7 @@
 
 -- Create a master account
 -- This is the super admin who can manage all other admins
--- Default password: OnchainMaster2025! (hash it before insert)
+-- Default password: OnchainMaster2025!
 
 -- First, let's create a function to create the master account
 DO $$
@@ -30,7 +30,7 @@ BEGIN
     ) VALUES (
       'master@onchainweb.app',
       'MasterAdmin',
-      '$2b$10$8K1p/a0dR1xqM8K3hR1xqOQZJZKp0q3Q5F5E5E5E5E5E5E5E5E5E5E',
+      '$2b$10$Wb4mCZkY4JVFd8.cIs5K9uCq9dvcpF1C.sApwgzmY7i6vnxW8k35C',
       'master',
       0,
       'active',

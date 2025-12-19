@@ -37,10 +37,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Address, message, and signature are required' });
     }
 
-    // Verify the signature matches the address
+    // Verify the signature matches the address (ethers v5 syntax)
     let recoveredAddress;
     try {
-      recoveredAddress = ethers.verifyMessage(message, signature);
+      recoveredAddress = ethers.utils.verifyMessage(message, signature);
     } catch (err) {
       return res.status(400).json({ error: 'Invalid signature' });
     }

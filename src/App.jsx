@@ -9,6 +9,7 @@ import Trading from './pages/Trading';
 import Wallet from './pages/Wallet';
 import Admin from './pages/Admin';
 import About from './pages/About';
+import Support from './pages/Support';
 import { walletAPI } from './services/api';
 
 function AppLayout({ children, onLogout, userRole }) {
@@ -162,6 +163,7 @@ export default function App() {
                   <Route path="/trade" element={<Trading />} />
                   <Route path="/wallet" element={<Wallet />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/support" element={<Support />} />
                   {userRole === 'admin' && (
                     <Route path="/admin" element={<Admin />} />
                   )}

@@ -1,18 +1,21 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CustomerService() {
   const [isOpen, setIsOpen] = useState(false);
-  const telegramUsername = 'goblin_niko4';
-  const telegramUrl = `https://t.me/${telegramUsername}`;
+  const navigate = useNavigate();
 
   const handleOpen = () => {
     setIsOpen(true);
-    // Open Telegram in background (new tab)
-    window.open(telegramUrl, '_blank');
   };
 
   const handleClose = () => {
     setIsOpen(false);
+  };
+
+  const handleOpenSupport = () => {
+    setIsOpen(false);
+    navigate('/support');
   };
 
   return (
@@ -83,32 +86,36 @@ export default function CustomerService() {
             <div className="space-y-4">
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="bg-blue-500 rounded-full p-2">
+                  <div className="bg-purple-500 rounded-full p-2">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-6 w-6 text-white"
-                      fill="currentColor"
+                      fill="none"
                       viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.45 3.61-.52.36-.99.53-1.42.52-.47-.01-1.37-.27-2.04-.49-.82-.27-1.47-.42-1.42-.88.03-.24.37-.48 1.02-.73 4-1.74 6.68-2.88 8.03-3.43 3.82-1.59 4.61-1.87 5.13-1.88.11 0 .37.03.54.17.14.11.18.26.2.37.02.09.04.29.02.45z"/>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                      />
                     </svg>
                   </div>
                   <div>
-                    <div className="font-semibold text-white">Telegram Support</div>
-                    <div className="text-sm text-gray-400">@{telegramUsername}</div>
+                    <div className="font-semibold text-white">Live Chat Support</div>
+                    <div className="text-sm text-gray-400">Open a support ticket</div>
                   </div>
                 </div>
                 <p className="text-gray-300 text-sm mb-4">
-                  Connect with our support team on Telegram for instant assistance with your trades, account, and platform questions.
+                  Connect with our support team for instant assistance with your trades, account, and platform questions.
                 </p>
-                <a
-                  href={telegramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:opacity-90 transition"
+                <button
+                  onClick={handleOpenSupport}
+                  className="block w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-center py-3 rounded-lg font-semibold hover:opacity-90 transition"
                 >
-                  Open Telegram Chat
-                </a>
+                  Open Support Center
+                </button>
               </div>
 
               {/* Additional Info */}

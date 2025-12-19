@@ -1,4 +1,5 @@
 import supabase from '../config/database.js'
+import { notifyNewTicket, notifyNewMessage } from '../services/telegramService.js'
 
 export const createTicket = async (req, res) => {
   try {
@@ -8,6 +9,13 @@ export const createTicket = async (req, res) => {
     if (!subject || !message) {
       return res.status(400).json({ error: 'Subject and message are required' })
     }
+
+    // Get user info for notification
+    const { data: user } = await supabase
+      .from('users')
+      .select('username, email')
+      .eq('id', userId)
+      .single()
 
     const { data: ticket, error } = await supabase
       .from('support_tickets')
@@ -26,6 +34,9 @@ export const createTicket = async (req, res) => {
       console.error('Create ticket error:', error)
       return res.status(500).json({ error: 'Failed to create ticket' })
     }
+
+    // Send Telegram notification to admin
+    await notifyNewTicket(ticket, user || { email: 'Unknown', username: 'Unknown' })
 
     res.status(201).json({
       message: 'Ticket created successfully',
@@ -127,6 +138,13 @@ export const addResponse = async (req, res) => {
       return res.status(400).json({ error: 'Message is required' })
     }
 
+    // Get user info for notification
+    const { data: user } = await supabase
+      .from('users')
+      .select('username, email')
+      .eq('id', userId)
+      .single()
+
     // Check if ticket exists and user has access
     let query = supabase
       .from('support_tickets')
@@ -158,6 +176,11 @@ export const addResponse = async (req, res) => {
     if (responseError) {
       console.error('Add response error:', responseError)
       return res.status(500).json({ error: 'Failed to add response' })
+    }
+
+    // Send Telegram notification for customer replies
+    if (!isAdmin) {
+      await notifyNewMessage(id, message, user || { email: 'Unknown', username: 'Unknown' }, false)
     }
 
     // Update ticket status if admin responded

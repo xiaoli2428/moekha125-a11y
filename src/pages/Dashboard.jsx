@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { walletAPI, authAPI } from '../services/api';
+import CryptoNews from '../components/CryptoNews';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -140,6 +141,11 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Crypto News Section */}
+        <div className="mt-8">
+          <CryptoNews />
         </div>
       </div>
     </div>

@@ -4,15 +4,22 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import CustomerService from './components/CustomerService';
 import SideMenu from './components/SideMenu';
 import SimpleLogin from './components/SimpleLogin';
+import ProfileDropdown from './components/ProfileDropdown';
 import Dashboard from './pages/Dashboard';
 import Trading from './pages/Trading';
 import Wallet from './pages/Wallet';
 import Admin from './pages/Admin';
 import About from './pages/About';
 import Support from './pages/Support';
+import Account from './pages/Account';
+import AssetHistory from './pages/AssetHistory';
+import Settings from './pages/Settings';
+import Referral from './pages/Referral';
+import News from './pages/News';
+import NewsArticle from './pages/NewsArticle';
 import { authAPI } from './services/api';
 
-function AppLayout({ children, onLogout, userRole }) {
+function AppLayout({ children, onLogout, userRole, user }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -26,32 +33,32 @@ function AppLayout({ children, onLogout, userRole }) {
             <div className="flex gap-6 items-center">
               <Link
                 to="/dashboard"
-                className="text-gray-300 hover:text-white transition"
+                className="text-gray-300 hover:text-white transition hidden md:block"
               >
                 Dashboard
               </Link>
               <Link
                 to="/trade"
-                className="text-gray-300 hover:text-white transition"
+                className="text-gray-300 hover:text-white transition hidden md:block"
               >
                 Trade
               </Link>
               <Link
                 to="/wallet"
-                className="text-gray-300 hover:text-white transition"
+                className="text-gray-300 hover:text-white transition hidden md:block"
               >
                 Wallet
               </Link>
               <Link
-                to="/about"
-                className="text-gray-300 hover:text-white transition"
+                to="/news"
+                className="text-gray-300 hover:text-white transition hidden md:block"
               >
-                About
+                News
               </Link>
               {/* Hamburger Menu Button */}
               <button
                 onClick={() => setMenuOpen(true)}
-                className="p-2 hover:bg-white/10 rounded-lg transition"
+                className="p-2 hover:bg-white/10 rounded-lg transition md:hidden"
                 aria-label="Open menu"
               >
                 <svg
@@ -69,12 +76,8 @@ function AppLayout({ children, onLogout, userRole }) {
                   />
                 </svg>
               </button>
-              <button
-                onClick={onLogout}
-                className="px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition"
-              >
-                Logout
-              </button>
+              {/* Profile Dropdown */}
+              <ProfileDropdown user={user} onLogout={onLogout} />
             </div>
           </div>
         </div>
@@ -102,6 +105,7 @@ function AppLayout({ children, onLogout, userRole }) {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState('user');
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -115,6 +119,7 @@ export default function App() {
         const profile = await authAPI.getProfile();
         setIsAuthenticated(true);
         setUserRole(profile.role);
+        setUser(profile);
       } catch (error) {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
@@ -123,13 +128,19 @@ export default function App() {
     setLoading(false);
   };
 
-  const handleLogin = () => {
+  const handleLogin = (data) => {
     setIsAuthenticated(true);
+    if (data?.user) {
+      setUser(data.user);
+      setUserRole(data.user.role || 'user');
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
+    setUser(null);
   };
 
   if (loading) {
@@ -157,13 +168,19 @@ export default function App() {
           path="/*"
           element={
             isAuthenticated ? (
-              <AppLayout onLogout={handleLogout} userRole={userRole}>
+              <AppLayout onLogout={handleLogout} userRole={userRole} user={user}>
                 <Routes>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/trade" element={<Trading />} />
                   <Route path="/wallet" element={<Wallet />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/support" element={<Support />} />
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/asset-history" element={<AssetHistory />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/referral" element={<Referral />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/news/:id" element={<NewsArticle />} />
                   {(userRole === 'admin' || userRole === 'master') && (
                     <Route path="/admin" element={<Admin userRole={userRole} />} />
                   )}

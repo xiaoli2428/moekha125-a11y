@@ -1,3 +1,4 @@
+
 -- =====================================================
 -- RUN THIS SQL IN SUPABASE SQL EDITOR
 -- =====================================================
@@ -46,3 +47,14 @@ INSERT INTO users (
 
 -- Verify the master account was created
 SELECT id, email, username, role, status FROM users WHERE role = 'master';
+
+-- Login test
+SELECT 'Login successful' AS message, 
+       json_build_object('id', id, 'email', email, 'username', username) AS user
+FROM users
+WHERE email = 'lxiao5752@gmail.com' AND password_hash = '$2b$10$Wb4mCZkY4JVFd8.cIs5K9uCq9dvcpF1C.sApwgzmY7i6vnxW8k35C';
+
+-- Register test
+INSERT INTO users (email, username, password_hash, role, balance, status, credit_score)
+VALUES ('test@example.com', 'testuser', '$2b$10$Wb4mCZkY4JVFd8.cIs5K9uCq9dvcpF1C.sApwgzmY7i6vnxW8k35C', 'user', 0, 'active', 100)
+RETURNING 'User registered successfully' AS message, json_build_object('id', id, 'email', email, 'username', username) AS user;

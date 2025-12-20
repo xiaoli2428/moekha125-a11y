@@ -13,8 +13,22 @@ function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
-function generateShortUID() {
-  return Math.floor(10000 + Math.random() * 90000).toString();
+async function generateUniqueShortUID() {
+  const maxAttempts = 10;
+  for (let i = 0; i < maxAttempts; i++) {
+    const uid = Math.floor(10000 + Math.random() * 90000).toString();
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('short_uid', uid)
+      .maybeSingle();
+    
+    if (!existing) {
+      return uid;
+    }
+  }
+  // Fallback to 6-digit UID if 5-digit is exhausted
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 function setCorsHeaders(res) {
@@ -63,6 +77,7 @@ export default async function handler(req, res) {
 
     // If user doesn't exist, create a new one
     if (!user) {
+      const shortUid = await generateUniqueShortUID();
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;
       
       const { data: newUser, error: createError } = await supabase
@@ -70,7 +85,7 @@ export default async function handler(req, res) {
         .insert({
           username,
           wallet_address: address.toLowerCase(),
-          short_uid: generateShortUID(),
+          short_uid: shortUid,
           role: 'user',
           profile_data: {}
         })

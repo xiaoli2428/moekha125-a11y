@@ -1,5 +1,6 @@
-// Use production API URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://moekha125-a11y.onrender.com/api'
+// Use Vercel Serverless Functions API for fast response
+// Falls back to environment variable if set
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Helper to get auth token
 const getToken = () => localStorage.getItem('token')
@@ -62,10 +63,10 @@ export const walletAPI = {
       body: JSON.stringify({ amount })
     }),
 
-  withdraw: (amount) =>
+  withdraw: (amount, address, network, coin_symbol) =>
     apiCall('/wallet/withdraw', {
       method: 'POST',
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({ amount, address, network, coin_symbol })
     }),
 
   transfer: (toUsername, amount) =>
@@ -75,7 +76,10 @@ export const walletAPI = {
     }),
 
   getTransactions: (limit = 50, offset = 0) =>
-    apiCall(`/wallet/transactions?limit=${limit}&offset=${offset}`)
+    apiCall(`/wallet/transactions?limit=${limit}&offset=${offset}`),
+
+  // Get deposit addresses (user-facing, only shows active addresses)
+  getDepositAddresses: () => apiCall('/wallet/deposit-addresses')
 }
 
 // Trading API
@@ -247,7 +251,27 @@ export const adminAPI = {
     const params = new URLSearchParams({ limit, offset })
     if (settingId) params.append('settingId', settingId)
     return apiCall(`/arbitrage/trades?${params}`)
-  }
+  },
+
+  // Deposit address management (admin only)
+  getDepositAddresses: () => apiCall('/admin/deposit-addresses'),
+
+  createDepositAddress: (data) =>
+    apiCall('/admin/deposit-addresses', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  updateDepositAddress: (id, data) =>
+    apiCall('/admin/deposit-addresses', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...data })
+    }),
+
+  deleteDepositAddress: (id) =>
+    apiCall(`/admin/deposit-addresses?id=${id}`, {
+      method: 'DELETE'
+    })
 }
 
 // KYC API
@@ -292,7 +316,7 @@ export const chatAPI = {
 export const coinsAPI = {
   getSupportedCoins: () => apiCall('/coins'),
 
-  getDepositAddresses: () => apiCall('/coins/deposit-addresses'),
+  getDepositAddresses: () => apiCall('/wallet/deposit-addresses'),
 
   // Admin
   getAllCoins: () => apiCall('/coins/admin/all'),

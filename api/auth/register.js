@@ -12,8 +12,22 @@ function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
-function generateShortUID() {
-  return Math.floor(10000 + Math.random() * 90000).toString();
+async function generateUniqueShortUID() {
+  const maxAttempts = 10;
+  for (let i = 0; i < maxAttempts; i++) {
+    const uid = Math.floor(10000 + Math.random() * 90000).toString();
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('short_uid', uid)
+      .maybeSingle();
+    
+    if (!existing) {
+      return uid;
+    }
+  }
+  // Fallback to 6-digit UID if 5-digit is exhausted
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 function setCorsHeaders(res) {
@@ -57,14 +71,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
+    // Generate unique UID
+    const shortUid = await generateUniqueShortUID();
+
     // Create user - matching actual DB schema
     const { data: user, error } = await supabase
       .from('users')
       .insert({
         email: email || null,
         wallet_address: wallet_address ? wallet_address.toLowerCase() : null,
-        username: username || email?.split('@')[0] || `user_${generateShortUID()}`,
-        short_uid: generateShortUID(),
+        username: username || email?.split('@')[0] || `user_${shortUid}`,
+        short_uid: shortUid,
         role: 'user',
         profile_data: {}
       })

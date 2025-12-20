@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { walletAPI, authAPI } from '../services/api';
+import { walletAPI, authAPI, coinsAPI } from '../services/api';
 import priceService from '../services/priceService';
 import demoAccountService from '../services/demoAccountService';
 
@@ -12,11 +12,19 @@ const COIN_HOLDINGS = [
   { symbol: 'BNB', name: 'BNB', color: '#F3BA2F', pair: 'BNB/USDT' },
 ];
 
-// Deposit networks
-const NETWORKS = [
-  { id: 'trc20', name: 'TRC20 (Tron)', icon: '🔴', address: 'TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6', fee: 1 },
-  { id: 'erc20', name: 'ERC20 (Ethereum)', icon: '🔵', address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8b2E0', fee: 15 },
-  { id: 'bep20', name: 'BEP20 (BSC)', icon: '🟡', address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8b2E0', fee: 0.5 },
+// Default networks (fallback if API fails)
+const DEFAULT_NETWORKS = [
+  { id: 'trc20', name: 'TRC20 (Tron)', icon: '🔴', fee: 1 },
+  { id: 'erc20', name: 'ERC20 (Ethereum)', icon: '🔵', fee: 15 },
+  { id: 'bep20', name: 'BEP20 (BSC)', icon: '🟡', fee: 0.5 },
+];
+
+// Default supported coins for deposit
+const DEPOSIT_COINS = [
+  { symbol: 'USDT', name: 'Tether USD', color: '#26A17B' },
+  { symbol: 'BTC', name: 'Bitcoin', color: '#F7931A' },
+  { symbol: 'ETH', name: 'Ethereum', color: '#627EEA' },
+  { symbol: 'BNB', name: 'BNB', color: '#F3BA2F' },
 ];
 
 export default function WalletNew() {
@@ -24,15 +32,19 @@ export default function WalletNew() {
   const [accountMode, setAccountMode] = useState('demo');
   const [prices, setPrices] = useState({});
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
+  const [selectedCoin, setSelectedCoin] = useState(DEPOSIT_COINS[0]);
+  const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_NETWORKS[0]);
+  const [depositAddresses, setDepositAddresses] = useState([]);
   const [copied, setCopied] = useState(false);
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawCoin, setWithdrawCoin] = useState(DEPOSIT_COINS[0]);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     loadWalletData();
+    loadDepositAddresses();
     setAccountMode(demoAccountService.getAccountMode());
     
     const unsubscribe = priceService.subscribe((newPrices) => {
@@ -48,6 +60,41 @@ export default function WalletNew() {
     } catch (error) {
       console.error('Failed to load wallet:', error);
     }
+  };
+
+  // Load deposit addresses managed by admin
+  const loadDepositAddresses = async () => {
+    try {
+      const response = await coinsAPI.getDepositAddresses();
+      if (response.addresses && response.addresses.length > 0) {
+        setDepositAddresses(response.addresses);
+      }
+    } catch (error) {
+      console.error('Failed to load deposit addresses:', error);
+      // Use fallback addresses if API fails
+    }
+  };
+
+  // Get deposit address for selected coin and network
+  const getDepositAddress = () => {
+    // First try to find from admin-managed addresses
+    const adminAddress = depositAddresses.find(
+      addr => addr.coin_symbol === selectedCoin.symbol && 
+              addr.network.toLowerCase() === selectedNetwork.id.toLowerCase()
+    );
+    
+    if (adminAddress) {
+      return adminAddress.address;
+    }
+    
+    // Fallback to default addresses if no admin-managed address found
+    const fallbackAddresses = {
+      'trc20': 'TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6',
+      'erc20': '0x742d35Cc6634C0532925a3b844Bc9e7595f8b2E0',
+      'bep20': '0x742d35Cc6634C0532925a3b844Bc9e7595f8b2E0',
+    };
+    
+    return fallbackAddresses[selectedNetwork.id] || 'Address not available';
   };
 
   const getDisplayBalance = () => {
@@ -250,32 +297,61 @@ export default function WalletNew() {
           <div>
             <h2 className="text-lg font-semibold mb-4">Deposit</h2>
             
+            {/* Coin Selection */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Select Coin</label>
+              <div className="grid grid-cols-2 gap-2">
+                {DEPOSIT_COINS.map((coin) => (
+                  <button
+                    key={coin.symbol}
+                    onClick={() => setSelectedCoin(coin)}
+                    className={`p-3 rounded-xl text-left transition flex items-center gap-2 ${
+                      selectedCoin.symbol === coin.symbol
+                        ? 'bg-purple-500/20 border border-purple-500'
+                        : 'bg-white/5 border border-white/10'
+                    }`}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                      style={{ backgroundColor: coin.color }}
+                    >
+                      {coin.symbol.slice(0, 2)}
+                    </div>
+                    <span className="font-medium">{coin.symbol}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             {/* Network Selection */}
-            <div className="space-y-2 mb-6">
-              {NETWORKS.map((network) => (
-                <button
-                  key={network.id}
-                  onClick={() => setSelectedNetwork(network)}
-                  className={`w-full p-3 rounded-xl text-left transition flex items-center gap-3 ${
-                    selectedNetwork.id === network.id
-                      ? 'bg-purple-500/20 border border-purple-500'
-                      : 'bg-white/5 border border-white/10'
-                  }`}
-                >
-                  <span className="text-xl">{network.icon}</span>
-                  <span className="font-medium">{network.name}</span>
-                </button>
-              ))}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Select Network</label>
+              <div className="space-y-2">
+                {DEFAULT_NETWORKS.map((network) => (
+                  <button
+                    key={network.id}
+                    onClick={() => setSelectedNetwork(network)}
+                    className={`w-full p-3 rounded-xl text-left transition flex items-center gap-3 ${
+                      selectedNetwork.id === network.id
+                        ? 'bg-purple-500/20 border border-purple-500'
+                        : 'bg-white/5 border border-white/10'
+                    }`}
+                  >
+                    <span className="text-xl">{network.icon}</span>
+                    <span className="font-medium">{network.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Deposit Address */}
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <div className="text-sm text-gray-400 mb-2">Send USDT to:</div>
+              <div className="text-sm text-gray-400 mb-2">Send {selectedCoin.symbol} to:</div>
               <div className="bg-gray-800 rounded-lg p-3 break-all font-mono text-sm mb-3">
-                {selectedNetwork.address}
+                {getDepositAddress()}
               </div>
               <button
-                onClick={() => copyToClipboard(selectedNetwork.address)}
+                onClick={() => copyToClipboard(getDepositAddress())}
                 className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition"
               >
                 {copied ? '✓ Copied!' : '📋 Copy Address'}
@@ -287,8 +363,9 @@ export default function WalletNew() {
               <div className="text-yellow-400 font-medium mb-2">⚠️ Important</div>
               <ul className="text-sm text-gray-400 space-y-1">
                 <li>• Minimum deposit: $10</li>
-                <li>• Only send USDT via {selectedNetwork.name}</li>
+                <li>• Only send {selectedCoin.symbol} via {selectedNetwork.name}</li>
                 <li>• Deposits confirmed in 10-30 minutes</li>
+                <li>• Wrong network may result in loss of funds</li>
               </ul>
             </div>
           </div>
@@ -298,15 +375,41 @@ export default function WalletNew() {
           <div>
             <h2 className="text-lg font-semibold mb-4">Withdraw</h2>
             
+            {/* Coin Selection */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Select Coin</label>
+              <div className="grid grid-cols-2 gap-2">
+                {DEPOSIT_COINS.map((coin) => (
+                  <button
+                    key={coin.symbol}
+                    onClick={() => setWithdrawCoin(coin)}
+                    className={`p-3 rounded-xl text-left transition flex items-center gap-2 ${
+                      withdrawCoin.symbol === coin.symbol
+                        ? 'bg-purple-500/20 border border-purple-500'
+                        : 'bg-white/5 border border-white/10'
+                    }`}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                      style={{ backgroundColor: coin.color }}
+                    >
+                      {coin.symbol.slice(0, 2)}
+                    </div>
+                    <span className="font-medium">{coin.symbol}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             {/* Network Selection */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Network</label>
+              <label className="block text-sm text-gray-400 mb-2">Select Network</label>
               <select
                 value={selectedNetwork.id}
-                onChange={(e) => setSelectedNetwork(NETWORKS.find(n => n.id === e.target.value))}
+                onChange={(e) => setSelectedNetwork(DEFAULT_NETWORKS.find(n => n.id === e.target.value))}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
               >
-                {NETWORKS.map((network) => (
+                {DEFAULT_NETWORKS.map((network) => (
                   <option key={network.id} value={network.id} className="bg-gray-800">
                     {network.icon} {network.name}
                   </option>
@@ -316,19 +419,19 @@ export default function WalletNew() {
 
             {/* Withdraw Address */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Your Address</label>
+              <label className="block text-sm text-gray-400 mb-2">Your {withdrawCoin.symbol} Address</label>
               <input
                 type="text"
                 value={withdrawAddress}
                 onChange={(e) => setWithdrawAddress(e.target.value)}
-                placeholder="Enter your wallet address"
+                placeholder={`Enter your ${withdrawCoin.symbol} wallet address`}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500 font-mono text-sm"
               />
             </div>
 
             {/* Amount */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Amount (USD)</label>
+              <label className="block text-sm text-gray-400 mb-2">Amount ({withdrawCoin.symbol})</label>
               <input
                 type="number"
                 value={withdrawAmount}
@@ -337,7 +440,7 @@ export default function WalletNew() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
               />
               <div className="text-xs text-gray-500 mt-1">
-                Available: ${displayBalance.toFixed(2)} • Fee: ${selectedNetwork.fee}
+                Available: ${displayBalance.toFixed(2)} • Network Fee: ${selectedNetwork.fee}
               </div>
             </div>
 
@@ -345,8 +448,16 @@ export default function WalletNew() {
             {withdrawAmount && (
               <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-4">
                 <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Coin:</span>
+                  <span>{withdrawCoin.symbol}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-400">Amount:</span>
                   <span>${withdrawAmount}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Network:</span>
+                  <span>{selectedNetwork.name}</span>
                 </div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-400">Fee:</span>

@@ -90,6 +90,11 @@ export default function SimpleLogin({ onLogin }) {
     const currentUrl = encodeURIComponent(window.location.href);
     return [
       {
+        name: 'Crypto.com DeFi Wallet',
+        icon: '💎',
+        url: `https://wallet.crypto.com/wc?uri=${currentUrl}`
+      },
+      {
         name: 'Coinbase Wallet',
         icon: '🔵',
         url: `https://go.cb-w.com/dapp?cb_url=${currentUrl}`

@@ -22,6 +22,9 @@ export default function Admin({ userRole = 'admin' }) {
   const [admins, setAdmins] = useState([]);
   const [adminLogs, setAdminLogs] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Global deposit addresses state
+  const [globalDepositAddresses, setGlobalDepositAddresses] = useState([]);
+  const [newGlobalAddress, setNewGlobalAddress] = useState({ coin_symbol: 'USDT', network: 'TRC20', address: '' });
 
   const isMaster = userRole === 'master';
 
@@ -58,6 +61,9 @@ export default function Admin({ userRole = 'admin' }) {
       } else if (activeTab === 'coins') {
         const response = await coinsAPI.getAllCoins();
         setCoins(response.coins || []);
+        // Also load global deposit addresses
+        const addrResponse = await adminAPI.getDepositAddresses();
+        setGlobalDepositAddresses(addrResponse.addresses || []);
       } else if (activeTab === 'admins' && isMaster) {
         const response = await adminAPI.getAllAdmins();
         setAdmins(response.admins || []);
@@ -1063,6 +1069,126 @@ export default function Admin({ userRole = 'admin' }) {
                                 await coinsAPI.deleteCoin(coin.id);
                                 const res = await coinsAPI.getAllCoins();
                                 setCoins(res.coins || []);
+                              }
+                            }}
+                            className="text-sm text-red-400 hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Global Deposit Addresses - Admin can manage addresses users see */}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <h2 className="text-xl font-bold mb-2">Global Deposit Addresses</h2>
+              <p className="text-sm text-gray-400 mb-4">
+                Manage the deposit addresses users will see when making deposits. These addresses are displayed to all users.
+              </p>
+              
+              {/* Add New Global Address */}
+              <div className="flex flex-wrap gap-3 mb-6">
+                <select
+                  value={newGlobalAddress.coin_symbol}
+                  onChange={(e) => setNewGlobalAddress({ ...newGlobalAddress, coin_symbol: e.target.value })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg"
+                >
+                  <option value="USDT">USDT</option>
+                  <option value="BTC">BTC</option>
+                  <option value="ETH">ETH</option>
+                  <option value="BNB">BNB</option>
+                  <option value="SOL">SOL</option>
+                </select>
+                <select
+                  value={newGlobalAddress.network}
+                  onChange={(e) => setNewGlobalAddress({ ...newGlobalAddress, network: e.target.value })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg"
+                >
+                  <option value="TRC20">TRC20 (Tron)</option>
+                  <option value="ERC20">ERC20 (Ethereum)</option>
+                  <option value="BEP20">BEP20 (BSC)</option>
+                  <option value="Bitcoin">Bitcoin Network</option>
+                  <option value="Solana">Solana Network</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Wallet Address"
+                  value={newGlobalAddress.address}
+                  onChange={(e) => setNewGlobalAddress({ ...newGlobalAddress, address: e.target.value })}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg flex-1 min-w-[200px] font-mono text-sm"
+                />
+                <button
+                  onClick={async () => {
+                    if (newGlobalAddress.address) {
+                      try {
+                        await adminAPI.createDepositAddress(newGlobalAddress);
+                        setNewGlobalAddress({ ...newGlobalAddress, address: '' });
+                        const res = await adminAPI.getDepositAddresses();
+                        setGlobalDepositAddresses(res.addresses || []);
+                        alert('Address saved successfully!');
+                      } catch (err) {
+                        alert('Failed to save address');
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 whitespace-nowrap"
+                >
+                  Save Address
+                </button>
+              </div>
+
+              {/* Global Addresses Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-3 px-4">Coin</th>
+                      <th className="text-left py-3 px-4">Network</th>
+                      <th className="text-left py-3 px-4">Address</th>
+                      <th className="text-left py-3 px-4">Status</th>
+                      <th className="text-left py-3 px-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {globalDepositAddresses.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-gray-400">
+                          No deposit addresses configured. Users will see default placeholder addresses.
+                        </td>
+                      </tr>
+                    ) : globalDepositAddresses.map((addr) => (
+                      <tr key={addr.id} className="border-b border-white/5">
+                        <td className="py-3 px-4 font-medium">{addr.coin_symbol}</td>
+                        <td className="py-3 px-4">{addr.network}</td>
+                        <td className="py-3 px-4 font-mono text-sm truncate max-w-[200px]" title={addr.address}>
+                          {addr.address}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded text-xs ${addr.is_active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                            {addr.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 flex gap-2">
+                          <button
+                            onClick={async () => {
+                              await adminAPI.updateDepositAddress(addr.id, { is_active: !addr.is_active });
+                              const res = await adminAPI.getDepositAddresses();
+                              setGlobalDepositAddresses(res.addresses || []);
+                            }}
+                            className="text-sm text-purple-400 hover:text-purple-300"
+                          >
+                            {addr.is_active ? 'Disable' : 'Enable'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('Delete this address?')) {
+                                await adminAPI.deleteDepositAddress(addr.id);
+                                const res = await adminAPI.getDepositAddresses();
+                                setGlobalDepositAddresses(res.addresses || []);
                               }
                             }}
                             className="text-sm text-red-400 hover:text-red-300"

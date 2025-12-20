@@ -46,9 +46,13 @@ createWeb3Modal({
   featuredWalletIds: [
     'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
     '971e689d0a5be527bac3b88bf325c41f6f552e852e2dd96147586620f185365a', // Coinbase
+    'f2436c67184f158d1beda5df53298ee84abfc367581e4505134b5bcf5f46697d', // Crypto.com DeFi Wallet
     '4622a2b2d6af1c9844944291e5e8d3930b7b4b3a5f1f3f8c5e2d9a6b3c0f5e2', // Trust Wallet
     'ecc4036f814562b41a5268adc86270fea1e1dfb2b6e3355ead3aacd1cedffb2f'  // Phantom
-  ]
+  ],
+  // Allow all wallets including Crypto.com Onchain Wallet
+  includeWalletIds: undefined,
+  excludeWalletIds: []
 })
 
 createRoot(document.getElementById('root')).render(<App />)

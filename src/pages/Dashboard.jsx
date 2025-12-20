@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import { walletAPI, authAPI } from '../services/api';
 import CryptoNews from '../components/CryptoNews';
+import demoAccountService from '../services/demoAccountService';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accountMode, setAccountMode] = useState('demo');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadDashboard();
+    setAccountMode(demoAccountService.getAccountMode());
   }, []);
 
   const loadDashboard = async () => {
@@ -24,6 +29,13 @@ export default function Dashboard() {
     }
   };
 
+  const toggleAccountMode = () => {
+    const newMode = demoAccountService.toggleAccountMode();
+    setAccountMode(newMode);
+    // Redirect to trading page to show the new account mode
+    navigate('/trade');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -35,15 +47,37 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          
+          {/* Demo/Real Account Switcher */}
+          <button
+            onClick={toggleAccountMode}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+              accountMode === 'demo'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-500 hover:opacity-90'
+            }`}
+          >
+            <span className="text-xl">{accountMode === 'demo' ? '🎮' : '💰'}</span>
+            <span>{accountMode === 'demo' ? 'Demo Account' : 'Real Account'}</span>
+          </button>
+        </div>
 
         {/* Balance and Credit Score Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Balance Card */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-500 rounded-2xl p-8">
-            <div className="text-sm opacity-80 mb-2">Total Balance</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm opacity-80">Total Balance</div>
+              {accountMode === 'demo' && (
+                <span className="text-xs bg-blue-500/30 px-2 py-1 rounded-full">Demo Mode</span>
+              )}
+            </div>
             <div className="text-5xl font-bold mb-4">
-              ${user?.balance?.toFixed(2) || '0.00'}
+              ${accountMode === 'demo' 
+                ? demoAccountService.getDemoBalance().toFixed(2)
+                : user?.balance?.toFixed(2) || '0.00'}
             </div>
             <div className="flex gap-4">
               <span className="text-sm">

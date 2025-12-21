@@ -94,7 +94,9 @@ export const useWalletConnect = () => {
             // Cache for 5 minutes
             setWalletSession({ address: walletAddress, chainId: walletChainId });
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to connect wallet';
+            const message = err instanceof Error
+                ? err.message
+                : 'Failed to connect wallet. Please ensure your wallet is installed, unlocked, and that you approve the connection request.';
             setError(message);
         } finally {
             setIsConnecting(false);

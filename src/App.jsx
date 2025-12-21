@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import CustomerService from './components/CustomerService';
 import SideMenu from './components/SideMenu';
-import SimpleLogin from './components/SimpleLogin';
+import LoginPage from './pages/LoginPage';
+import DappPage from './pages/DappPage';
 import ProfileDropdown from './components/ProfileDropdown';
 import BottomNav from './components/BottomNav';
 import Home from './pages/Home';
@@ -21,6 +22,14 @@ import Referral from './pages/Referral';
 import News from './pages/News';
 import NewsArticle from './pages/NewsArticle';
 import { authAPI } from './services/api';
+
+/**
+ * OPTIMIZED ROUTING STRUCTURE:
+ * 
+ * "/" → LoginPage (FAST - no web3)
+ * "/app" → DappPage (HEAVY - all web3, balances, RPC calls)
+ * "/dashboard/*" → AppLayout with existing pages
+ */
 
 function AppLayout({ children, onLogout, userRole, user }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -207,23 +216,44 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* FAST LOGIN PAGE - NO WEB3 */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/app" />
+            ) : (
+              <LoginPage onLogin={handleLogin} />
+            )
+          }
+        />
+
+        {/* LEGACY LOGIN ROUTE (for backwards compatibility) */}
         <Route
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" />
+              <Navigate to="/app" />
             ) : (
-              <SimpleLogin onLogin={handleLogin} />
+              <LoginPage onLogin={handleLogin} />
             )
           }
         />
+
+        {/* DAPP PAGE - ALL WEB3 LOGIC HERE */}
         <Route
-          path="/*"
+          path="/app"
+          element={isAuthenticated ? <DappPage /> : <Navigate to="/" />}
+        />
+
+        {/* LEGACY DASHBOARD ROUTES (for backwards compatibility) */}
+        <Route
+          path="/dashboard/*"
           element={
             isAuthenticated ? (
               <AppLayout onLogout={handleLogout} userRole={userRole} user={user}>
                 <Routes>
-                  <Route path="/dashboard" element={<Home />} />
+                  <Route path="/" element={<Home />} />
                   <Route path="/market" element={<Market />} />
                   <Route path="/trade" element={<BinaryTrading />} />
                   <Route path="/ai-arbitrage" element={<AIArbitrage />} />
@@ -243,10 +273,13 @@ export default function App() {
                 </Routes>
               </AppLayout>
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
+
+        {/* Catch-all: redirect to login */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

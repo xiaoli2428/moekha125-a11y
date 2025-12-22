@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -30,24 +31,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, wallet_address } = req.body;
+    const { email, password } = req.body;
 
-    if (!email && !wallet_address) {
-      return res.status(400).json({ error: 'Email or wallet address required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user by email or wallet
-    let query = supabase
+    // Find user by email
+    const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, username, wallet_address, role, short_uid, created_at, last_seen');
-    
-    if (email) {
-      query = query.eq('email', email);
-    } else {
-      query = query.ilike('wallet_address', wallet_address);
-    }
-    
-    const { data: user, error } = await query.maybeSingle();
+      .select('id, email, username, password_hash, role, balance, status, credit_score, short_uid')
+      .eq('email', email)
+      .maybeSingle();
 
     if (error) {
       console.error('Login query error:', error);
@@ -55,7 +50,18 @@ export default async function handler(req, res) {
     }
     
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check account status
+    if (user.status !== 'active') {
+      return res.status(403).json({ error: 'Account is suspended or banned' });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Update last_seen
@@ -74,8 +80,9 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email,
         username: user.username,
-        walletAddress: user.wallet_address,
         role: user.role || 'user',
+        balance: parseFloat(user.balance) || 0,
+        creditScore: user.credit_score || 100,
         shortUid: user.short_uid
       }
     });

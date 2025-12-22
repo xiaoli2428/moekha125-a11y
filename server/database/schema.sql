@@ -141,3 +141,11 @@ ALTER TABLE ticket_responses ENABLE ROW LEVEL SECURITY;
 
 -- Note: RLS policies should be configured based on your authentication setup
 -- For now, we'll use service role key which bypasses RLS
+
+### Database (Supabase) — Already configured
+Schema is deployed. For new migrations, add SQL files to `server/database/` and run in Supabase SQL Editor:
+- `schema.sql` — Core tables (users, transactions, binary_trades, support_tickets)
+- `deposit_addresses_and_coins.sql` — Crypto deposit addresses
+- `kyc_tables.sql` — KYC verification
+- `trading_levels.sql` — User trading tiers
+- `master_account.sql` — Master role setup

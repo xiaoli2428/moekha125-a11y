@@ -1,89 +1,179 @@
 # Copilot Instructions for Onchainweb
 
-**Onchainweb** is a minimal React + Vite + Tailwind CSS DeFi starter showcasing an accessibility-first web3 interface with mock data.
+Full-stack DeFi trading platform with React frontend, Express/Supabase backend, and Web3 wallet integration.
 
-## Tech Stack
+## Architecture Overview
 
-- React 18.2.0 + Vite 5.0.0 + Tailwind CSS 3.4.8
-- No state management, routing, or backend (yet)
+```
+src/                  # Main React frontend (Vite + Tailwind)
+├── pages/            # Route components (LoginPage, DappPage, Admin, etc.)
+├── components/       # UI components (WalletConnect, CustomerService, etc.)
+├── services/api.js   # Centralized API client (authAPI, walletAPI, tradingAPI)
+└── web3modal/setup.js # Lazy-loaded Web3Modal (heavy deps only on wallet connect)
 
-## Architecture
+server/               # Express.js backend (ES modules)
+├── controllers/      # Business logic (auth, trading, wallet, admin)
+├── routes/           # API route definitions (/api/auth, /api/wallet, etc.)
+├── middleware/auth.js # JWT auth + role guards (requireAdmin, requireMaster)
+├── config/database.js # Supabase client setup
+└── database/schema.sql # PostgreSQL schema (run in Supabase SQL Editor)
 
-- **Component Tree**: `App.jsx` renders `Header`, `Hero`, `Features`, `Footer` in a flexbox layout (`min-h-screen flex flex-col`)
-- **Styling System**: Tailwind utilities + custom extensions in `tailwind.config.cjs` (primary: `#6EE7B7`, accent: `#7C3AED`) + radial gradient background in `index.css`
-- **Data Flow**: Currently static mock data (see `Hero.jsx` balance cards, `Features.jsx` items array). No state management yet.
-- **Entry Point**: `main.jsx` → `App.jsx` → component tree
+fast-homepage/        # Performance-optimized frontend (TypeScript + React Query)
+                      # INTENDED TO REPLACE main src/ frontend - uses multicall, lazy loading
+
+api/                  # Vercel Serverless Functions (edge deployment alternative)
+```
 
 ## Development Workflow
 
 ```bash
-npm run dev    # Vite dev server on :5173
-npm run build  # Production build
-npm run preview # Preview production build
+# Terminal 1: Backend (port 3001)
+cd server && npm run dev
+
+# Terminal 2: Frontend (port 5173)
+npm run dev
+
+# fast-homepage alternative (port 4173)
+cd fast-homepage && npm run dev
 ```
 
-**No test infrastructure exists.** All components are functional (no class components).
+**No test infrastructure exists.** Backend uses `node --watch` for auto-reload.
 
-## Critical Patterns
+## Deployment
 
-### Styling Convention
-- **Dark theme baseline**: `bg-gray-900 text-white` (body) with radial gradients in `index.css`
-- **Custom opacity utilities**: `.bg-white/3` and `.bg-white/2` defined in `index.css` (not standard Tailwind)
-- **Gradient pattern**: Purple-to-indigo gradients (`from-purple-600 to-indigo-500`) used consistently across CTAs and brand elements
-- **Responsive breakpoint**: Mobile-first with `md:` prefix (768px+)
+### Database (Supabase) — Already configured
+Schema is deployed. For new migrations, add SQL files to `server/database/` and run in Supabase SQL Editor:
+- `schema.sql` — Core tables (users, transactions, binary_trades, support_tickets)
+- `deposit_addresses_and_coins.sql` — Crypto deposit addresses
+- `kyc_tables.sql` — KYC verification
+- `trading_levels.sql` — User trading tiers
+- `master_account.sql` — Master role setup
 
-Example from `Header.jsx`:
-```jsx
-<button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-lg text-sm font-semibold shadow-md hover:opacity-95">
+### Backend (Railway or Render)
+```bash
+# Railway: Connect GitHub, set root directory to "server"
+# Render: Use render.yaml for auto-config
+```
+**Required env vars:**
+```env
+PORT=3001
+NODE_ENV=production
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_KEY=your_service_role_key
+JWT_SECRET=random_64_char_string
+FRONTEND_URL=https://your-app.vercel.app
 ```
 
-### Component Structure
-Each component exports a default function with inline JSX (no separate templates). See `Features.jsx` for data-driven rendering pattern:
-```jsx
-const items = [/* mock data */]
-export default function Features() {
-  return <section>{items.map(it => <div key={it.title}>...)}</section>
-}
+### Frontend (Vercel)
+- Framework: Vite, Output: `dist`
+- Set `VITE_API_URL` only if using separate backend (Railway/Render)
+- If omitted, uses Vercel Serverless `/api/` routes automatically
+- SPA routing configured in `vercel.json`
+
+**Required Vercel env vars (for serverless API):**
+```env
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_JWT_SECRET=random_64_char_string
 ```
 
-### Accessibility Considerations
-- **Current state**: Semantic HTML used (`<header>`, `<nav>`, `<main>`, `<footer>`), but no ARIA labels or keyboard nav improvements yet
-- **When adding interactivity**: 
-  - Buttons without visible text need `aria-label`
-  - Navigation links need proper focus styles (currently only `hover:text-white`)
-  - Modal/drawer components need `role`, `aria-modal`, focus trapping
+### Vercel Serverless API (`/api/` directory)
+Available endpoints (edge functions, no separate backend needed):
+- `/api/health` — Health check
+- `/api/auth/login`, `/api/auth/register`, `/api/auth/profile`
+- `/api/auth/wallet-login` — Web3 wallet authentication
+- `/api/wallet/transactions`, `/api/wallet/deposit-addresses`
+- `/api/admin/deposit-addresses`
 
-Example missing a11y pattern to add:
-```jsx
-// Current (Header.jsx)
-<button className="...">Connect</button>
+## Core API Reference
 
-// Should be (for icon-only buttons)
-<button aria-label="Connect wallet" className="...">Connect</button>
+### Authentication
+```bash
+POST /api/auth/register  # {email, password, username}
+POST /api/auth/login     # {email, password} → returns {token, user}
+GET  /api/auth/profile   # Requires: Authorization: Bearer <token>
 ```
 
-## When Adding Features
+### Wallet Operations
+```bash
+POST /api/wallet/deposit     # {amount}
+POST /api/wallet/withdraw    # {amount, address, network, coin_symbol}
+POST /api/wallet/transfer    # {toUsername, amount}
+GET  /api/wallet/transactions
+```
 
-- **New components**: Place in `src/components/`, export default function, import in `App.jsx`
-- **Mock data**: Define as const arrays/objects at top of component file (see `Features.jsx` items)
-- **Future web3 integration points**: 
-  - Wallet connection → `Header.jsx` "Connect" button
-  - Balance display → `Hero.jsx` balance cards (currently `• • • •`)
-  - Real price feeds → `Hero.jsx` TVL/Volume metrics
-- **Preserve**: Gradient aesthetic, minimal dependency footprint (no state libs yet), dark theme
+### Binary Trading
+```bash
+POST /api/trading/place  # {pair, direction: "up"|"down", amount, duration}
+GET  /api/trading        # ?status=pending|win|loss|all
+```
 
-## Key Files
+### Admin (requires admin/master role)
+```bash
+GET   /api/admin/dashboard        # Platform stats
+GET   /api/admin/users            # All users
+PATCH /api/admin/users/:id/balance  # {amount, operation: "add"|"subtract"}
+PATCH /api/admin/users/:id/status   # {status: "active"|"suspended"|"banned"}
+```
 
-- `src/App.jsx` - Main layout container
-- `src/components/Header.jsx` - Navigation with Connect/Launch buttons
-- `src/components/Hero.jsx` - Hero with balance preview and CTAs
-- `src/components/Features.jsx` - 8-item grid of feature cards
-- `src/index.css` - Custom gradients and opacity utilities
-- `tailwind.config.cjs` - Extended color palette and gradients
+### Health Check
+```bash
+curl https://your-backend/api/health  # {"status":"ok","timestamp":"..."}
+```
+
+## Key Integration Patterns
+
+### Performance Optimizations (Homepage Speed)
+- **Lazy loading**: All pages except `LoginPage` use `React.lazy()` - see `src/App.jsx`
+- **Code splitting**: `vite.config.js` splits vendor chunks (react, ethers, web3modal)
+- **Web3 on-demand**: `src/web3modal/setup.js` only loads when user clicks "Connect Wallet"
+- **Suspense fallback**: `PageLoader` component shows while chunks load
+- **No blocking auth**: Auth state reads from localStorage first, validates token in background
+
+### Frontend-Backend Communication
+All API calls via `src/services/api.js`. Token stored in localStorage:
+```javascript
+import { authAPI, walletAPI, tradingAPI } from './services/api';
+const profile = await authAPI.getProfile();  // Auto-attaches Bearer token
+```
+
+### Web3 Integration
+Web3Modal is **lazy-loaded** to keep initial page fast:
+```javascript
+// In src/web3modal/setup.js - only imported on "Connect Wallet" click
+const { createWeb3Modal } = await import('@web3modal/ethers5/react');
+```
+
+### Background Jobs (server/index.js)
+- Trade settlement: every 10 seconds (`settleExpiredTrades`)
+- AI arbitrage: every 30 seconds (`executeArbitrage`)
+
+## Adding Features
+
+### New API Endpoint
+1. Create controller in `server/controllers/`
+2. Add route in `server/routes/`, use `authenticate` middleware
+3. Register in `server/index.js`: `app.use('/api/newroute', newRoutes)`
+4. Add client method in `src/services/api.js`
+
+### New Frontend Page
+1. Create in `src/pages/NewPage.jsx`
+2. Add route in `src/App.jsx` Routes block
+3. For authenticated pages, check `localStorage.getItem('token')`
+
+## Styling Conventions
+- **Theme**: Dark (`bg-gray-900`), gradients (`from-purple-600 to-indigo-500`)
+- **Colors**: `tailwind.config.cjs` - `primary: #6EE7B7`, `accent: #7C3AED`
+- **Pattern**: Mobile-first with `md:` breakpoint, glass-morphism (`bg-black/50 backdrop-blur-lg`)
+
+## Role System
+- `user`: Standard access
+- `admin`: User management, ticket responses
+- `master`: Full control (arbitrage settings, balance modifications)
+
+Middleware: `requireAdmin`, `requireMaster` in `server/middleware/auth.js`
 
 ## Constraints
-
-- Keep bundle minimal (no heavy libs without discussion)
-- All data is mock (no real on-chain calls)
-- No backend/API endpoints exist
-- Vite config is default (no custom plugins or aliases)
+- ES modules throughout (`"type": "module"` in both package.json files)
+- No ORMs - direct Supabase client queries
+- JWT tokens expire in 7 days (configurable in `server/config/jwt.js`)

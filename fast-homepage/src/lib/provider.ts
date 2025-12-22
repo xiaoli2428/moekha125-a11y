@@ -8,9 +8,7 @@ export const provider = new StaticJsonRpcProvider(
     import.meta.env.VITE_RPC_PRIMARY || 'https://cloudflare-eth.com',
     {
         chainId: 1,
-        name: 'ethereum',
-        batchMaxSize: 100,
-        batchStallTime: 10
+        name: 'ethereum'
     }
 );
 
@@ -19,9 +17,7 @@ export const polygonProvider = new StaticJsonRpcProvider(
     import.meta.env.VITE_RPC_POLYGON || 'https://polygon-rpc.com',
     {
         chainId: 137,
-        name: 'polygon',
-        batchMaxSize: 100,
-        batchStallTime: 10
+        name: 'polygon'
     }
 );
 

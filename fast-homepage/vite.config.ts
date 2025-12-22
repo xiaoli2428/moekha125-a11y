@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Use repo subpath when deploying to GitHub Pages
+  base: process.env.GITHUB_PAGES ? '/moekha125-a11y/' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -43,11 +45,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': ['react', 'react-dom'],
           'vendor-query': ['@tanstack/react-query'],
-          'vendor-ethers': ['ethers'],
-          'charts': ['lightweight-charts'],
-          'web3modal': ['@web3modal/ethers5']
+          'vendor-ethers': ['ethers']
         }
       }
     },

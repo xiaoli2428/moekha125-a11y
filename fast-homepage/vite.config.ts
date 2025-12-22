@@ -43,11 +43,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': ['react', 'react-dom'],
           'vendor-query': ['@tanstack/react-query'],
-          'vendor-ethers': ['ethers'],
-          'charts': ['lightweight-charts'],
-          'web3modal': ['@web3modal/ethers5']
+          'vendor-ethers': ['ethers']
         }
       }
     },

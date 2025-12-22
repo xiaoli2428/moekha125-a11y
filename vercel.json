@@ -1,4 +1,16 @@
 {
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "functions": {},
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}{
   "functions": {
     "api/**/*.js": {
       "memory": 256,

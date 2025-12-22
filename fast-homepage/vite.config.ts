@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Use repo subpath when deploying to GitHub Pages
+  base: process.env.GITHUB_PAGES ? '/moekha125-a11y/' : '/',
   plugins: [
     react(),
     VitePWA({

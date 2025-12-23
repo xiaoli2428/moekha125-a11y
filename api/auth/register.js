@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt';
-import { handleCors, setCorsHeaders } from '../../lib/auth.js';
-import supabase from '../../lib/supabase.js';
-import { generateToken } from '../../lib/jwt.js';
+import supabase from '../lib/supabase.js';
+import { generateToken } from '../lib/jwt.js';
 
 export default async function handler(req, res) {
-  handleCors(req, res);
-  setCorsHeaders(res);
+  // CORS setup
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

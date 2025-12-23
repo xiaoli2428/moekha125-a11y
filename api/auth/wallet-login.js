@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
-import { handleCors, setCorsHeaders } from '../../lib/auth.js';
-import supabase from '../../lib/supabase.js';
-import { generateToken } from '../../lib/jwt.js';
+import supabase from '../lib/supabase.js';
+import { generateToken } from '../lib/jwt.js';
 
 export default async function handler(req, res) {
   // CORS setup

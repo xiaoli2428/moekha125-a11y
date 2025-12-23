@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+import { supportAPI } from '../services/api'
 
 export default function Support() {
   const navigate = useNavigate()
@@ -36,10 +35,7 @@ export default function Support() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`${API_URL}/support`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const data = await supportAPI.getTickets('all', 100, 0)
       setTickets(data.tickets || [])
     } catch (error) {
       console.error('Failed to fetch tickets:', error)
@@ -50,10 +46,7 @@ export default function Support() {
 
   const fetchTicketDetails = async (ticketId) => {
     try {
-      const res = await fetch(`${API_URL}/support/${ticketId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const data = await supportAPI.getTicketById(ticketId)
       setResponses(data.responses || [])
     } catch (error) {
       console.error('Failed to fetch ticket details:', error)
@@ -65,23 +58,12 @@ export default function Support() {
     if (!newTicket.subject.trim() || !newTicket.message.trim()) return
 
     try {
-      const res = await fetch(`${API_URL}/support`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(newTicket)
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setTickets([data.ticket, ...tickets])
-        setSelectedTicket(data.ticket)
-        setShowNewTicket(false)
-        setNewTicket({ subject: '', message: '', category: 'general' })
-        setResponses([])
-      }
+      const data = await supportAPI.createTicket(newTicket.subject, newTicket.message, newTicket.category)
+      setTickets([data.ticket, ...tickets])
+      setSelectedTicket(data.ticket)
+      setShowNewTicket(false)
+      setNewTicket({ subject: '', message: '', category: 'general' })
+      setResponses([])
     } catch (error) {
       console.error('Failed to create ticket:', error)
     }
@@ -92,20 +74,9 @@ export default function Support() {
     if (!newMessage.trim() || !selectedTicket) return
 
     try {
-      const res = await fetch(`${API_URL}/support/${selectedTicket.id}/responses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: newMessage })
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setResponses([...responses, data.response])
-        setNewMessage('')
-      }
+      const data = await supportAPI.addResponse(selectedTicket.id, newMessage)
+      setResponses([...responses, data.response])
+      setNewMessage('')
     } catch (error) {
       console.error('Failed to send message:', error)
     }
@@ -188,9 +159,8 @@ export default function Support() {
                   <div
                     key={ticket.id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className={`p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-750 transition ${
-                      selectedTicket?.id === ticket.id ? 'bg-gray-700' : ''
-                    }`}
+                    className={`p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-750 transition ${selectedTicket?.id === ticket.id ? 'bg-gray-700' : ''
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -247,11 +217,10 @@ export default function Support() {
                       className={`flex ${response.is_staff ? 'justify-start' : 'justify-end'}`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                          response.is_staff
-                            ? 'bg-gray-700 rounded-tl-sm'
-                            : 'bg-purple-600 rounded-tr-sm'
-                        }`}
+                        className={`max-w-[70%] rounded-2xl px-4 py-3 ${response.is_staff
+                          ? 'bg-gray-700 rounded-tl-sm'
+                          : 'bg-purple-600 rounded-tr-sm'
+                          }`}
                       >
                         {response.is_staff && (
                           <p className="text-xs text-green-400 mb-1">🛡️ Support Agent</p>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://onchainweb-api-production.up.railway.app/api';
+import { authAPI } from '../services/api';
 
 export default function UniversalLogin({ onLogin }) {
   // Auth mode: 'wallet' | 'email-login' | 'email-register'
@@ -31,8 +30,7 @@ export default function UniversalLogin({ onLogin }) {
 
   // Check server health on mount
   useEffect(() => {
-    fetch(`${API_URL}/health`)
-      .then(r => r.json())
+    authAPI.checkHealth()
       .then(d => setServerOnline(d.status === 'ok'))
       .catch(() => setServerOnline(false));
   }, []);
@@ -67,17 +65,7 @@ export default function UniversalLogin({ onLogin }) {
       const signature = await signer.signMessage(message);
 
       // Send to backend
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, message, signature })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Wallet login failed');
-      }
+      const data = await authAPI.walletLogin(address, message, signature);
 
       // Store token and user
       localStorage.setItem('token', data.token);
@@ -114,17 +102,7 @@ export default function UniversalLogin({ onLogin }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
+      const data = await authAPI.register({ username, email, password });
 
       setSuccess('Registration successful! Please login now.');
       setAuthMode('email-login');
@@ -152,17 +130,7 @@ export default function UniversalLogin({ onLogin }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      const data = await authAPI.login({ email, password });
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -195,7 +163,7 @@ export default function UniversalLogin({ onLogin }) {
           {/* Server Status */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
             <div className={`w-2 h-2 rounded-full ${serverOnline === null ? 'bg-yellow-500 animate-pulse' :
-                serverOnline ? 'bg-green-500' : 'bg-red-500'
+              serverOnline ? 'bg-green-500' : 'bg-red-500'
               }`}></div>
             <span>Server: {serverOnline === null ? 'Checking...' : serverOnline ? 'Online' : 'Offline'}</span>
           </div>

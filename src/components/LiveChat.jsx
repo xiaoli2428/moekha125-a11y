@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import { chatAPI } from '../services/api';
 
 export default function LiveChat({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
@@ -39,13 +38,8 @@ export default function LiveChat({ isOpen, onClose }) {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`${API_URL}/chat/messages`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
-      }
+      const data = await chatAPI.getMessages(100, 0);
+      setMessages(data.messages || []);
     } catch (error) {
       console.error('Failed to fetch messages:', error);
     } finally {
@@ -59,20 +53,9 @@ export default function LiveChat({ isOpen, onClose }) {
 
     setSending(true);
     try {
-      const res = await fetch(`${API_URL}/chat/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: newMessage.trim() })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setMessages([...messages, data.message]);
-        setNewMessage('');
-      }
+      const data = await chatAPI.sendMessage(newMessage.trim());
+      setMessages([...messages, data.message]);
+      setNewMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
@@ -171,11 +154,10 @@ export default function LiveChat({ isOpen, onClose }) {
                     className={`flex ${message.is_from_admin ? 'justify-start' : 'justify-end'} mb-3`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                        message.is_from_admin
-                          ? 'bg-gray-700 rounded-bl-sm'
-                          : 'bg-gradient-to-r from-purple-600 to-indigo-500 rounded-br-sm'
-                      }`}
+                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${message.is_from_admin
+                        ? 'bg-gray-700 rounded-bl-sm'
+                        : 'bg-gradient-to-r from-purple-600 to-indigo-500 rounded-br-sm'
+                        }`}
                     >
                       {message.is_from_admin && (
                         <p className="text-xs text-purple-400 mb-1">Support Agent</p>

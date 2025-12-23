@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
-
-// Production API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://onchainweb-api-production.up.railway.app/api';
+import { authAPI } from '../services/api';
 
 // Detect if we're on mobile
 const isMobile = () => {
@@ -104,14 +102,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
 
       const signature = await signer.signMessage(message);
 
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, message, signature }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Auth failed');
+      const data = await authAPI.walletLogin(address, message, signature);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('walletAddress', address);
@@ -129,8 +120,8 @@ export default function MultiWalletConnect({ onWalletLogin }) {
   useEffect(() => {
     const checkServer = async () => {
       try {
-        const res = await fetch(`${API_URL.replace('/api', '')}/health`, { method: 'GET' });
-        if (res.ok) setServerStatus('online');
+        const result = await authAPI.checkHealth();
+        if (result.status === 'ok') setServerStatus('online');
         else setServerStatus('offline');
       } catch (e) {
         setServerStatus('offline');
@@ -305,21 +296,8 @@ export default function MultiWalletConnect({ onWalletLogin }) {
       console.log('Signature obtained, sending to server...');
 
       // Send to backend
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ address, message, signature }),
-      });
-
-      const data = await response.json();
+      const data = await authAPI.walletLogin(address, message, signature);
       console.log('Server response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Wallet authentication failed');
-      }
 
       // Store auth data
       localStorage.setItem('token', data.token);
@@ -371,7 +349,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
         <div className="flex items-center gap-2">
           <span>Server:</span>
           <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'online' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' :
-              serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
+            serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
             }`}></div>
           <span className={serverStatus === 'online' ? 'text-green-500/70' : ''}>
             {serverStatus}

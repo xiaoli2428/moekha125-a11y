@@ -3,23 +3,6 @@ import { handleCors, setCorsHeaders } from '../../lib/auth.js';
 import supabase from '../../lib/supabase.js';
 import { generateToken } from '../../lib/jwt.js';
 
-async function generateUniqueShortUID() {
-  const maxAttempts = 10;
-  for (let i = 0; i < maxAttempts; i++) {
-    const uid = Math.floor(10000 + Math.random() * 90000).toString();
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('short_uid', uid)
-      .maybeSingle();
-
-    if (!existing) {
-      return uid;
-    }
-  }
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 export default async function handler(req, res) {
   handleCors(req, res);
   setCorsHeaders(res);
@@ -58,9 +41,6 @@ export default async function handler(req, res) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Generate unique UID
-    const shortUid = await generateUniqueShortUID();
-
     // Create user
     const { data: user, error } = await supabase
       .from('users')
@@ -68,13 +48,12 @@ export default async function handler(req, res) {
         email,
         password_hash: passwordHash,
         username,
-        short_uid: shortUid,
         role: 'user',
         balance: 0,
         status: 'active',
         credit_score: 100
       })
-      .select('id, email, username, role, balance, credit_score, short_uid, created_at')
+      .select('id, email, username, role, balance, credit_score, created_at')
       .single();
 
     if (error) {
@@ -97,8 +76,7 @@ export default async function handler(req, res) {
         username: user.username,
         role: user.role,
         balance: parseFloat(user.balance) || 0,
-        creditScore: user.credit_score,
-        shortUid: user.short_uid
+        creditScore: user.credit_score
       }
     });
   } catch (error) {

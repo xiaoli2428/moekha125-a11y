@@ -22,11 +22,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Address, message, and signature are required' });
     }
 
-    // Verify the signature matches the address (ethers v5 syntax)
+    // Verify the signature matches the address (ethers v6 syntax)
     let recoveredAddress;
     try {
-      recoveredAddress = ethers.utils.verifyMessage(message, signature);
+      recoveredAddress = ethers.verifyMessage(message, signature);
     } catch (err) {
+      console.error('Signature verification failed:', err);
       return res.status(400).json({ error: 'Invalid signature' });
     }
 

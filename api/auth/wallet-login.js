@@ -42,6 +42,11 @@ export default async function handler(req, res) {
       .ilike('wallet_address', address)
       .maybeSingle();
 
+    if (error) {
+      console.error('Wallet query error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
     // If user doesn't exist, create a new one
     if (!user) {
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;

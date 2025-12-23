@@ -58,19 +58,14 @@ app.use('/api/market', marketRoutes)
 
 // Health check endpoints
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  })
+  res.setHeader('Content-Type', 'application/json')
+  res.status(200).send('{"status":"ok"}')
 })
 
 // Root health check (for Railway)
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  })
+  res.setHeader('Content-Type', 'application/json')
+  res.status(200).send('{"status":"ok"}')
 })
 
 // Root endpoint
@@ -96,43 +91,45 @@ app.use((err, req, res, next) => {
 // Background jobs
 async function startBackgroundJobs() {
   // Only start background jobs if Supabase is configured
-
-}
-
-console.log('✓ Background jobs started')
-
-// Trade settlement: Every 10 seconds
-setInterval(async () => {
-  try {
-    await settleExpiredTrades()
-  } catch (error) {
-    // Silent fail - only log if important
-    if (error.message && !error.message.includes('Invalid API key')) {
-      console.error('Trade settlement error:', error.message)
-    }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    console.log('⚠️  Background jobs disabled - Supabase not configured')
+    return
   }
-}, 10000)
 
-// Arbitrage execution: Every 30 seconds
-setInterval(async () => {
-  try {
-    await executeArbitrage()
-  } catch (error) {
-    // Silent fail - only log if important
-    if (error.message && !error.message.includes('Invalid API key')) {
-      console.error('Arbitrage error:', error.message)
+  console.log('✓ Background jobs started')
+
+  // Trade settlement: Every 10 seconds
+  setInterval(async () => {
+    try {
+      await settleExpiredTrades()
+    } catch (error) {
+      // Silent fail - only log if important
+      if (error.message && !error.message.includes('Invalid API key')) {
+        console.error('Trade settlement error:', error.message)
+      }
     }
-  }
-}, 30000)
+  }, 10000)
+
+  // Arbitrage execution: Every 30 seconds
+  setInterval(async () => {
+    try {
+      await executeArbitrage()
+    } catch (error) {
+      // Silent fail - only log if important
+      if (error.message && !error.message.includes('Invalid API key')) {
+        console.error('Arbitrage error:', error.message)
+      }
+    }
+  }, 30000)
 }
 
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  // Don't await background jobs - let them start independently
+  // Start background jobs without blocking
   startBackgroundJobs().catch(err => {
-    console.log('Background jobs initialization:', err.message || 'disabled')
+    console.log('Background jobs skipped:', err.message || 'not configured')
   })
 })
 

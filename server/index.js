@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import rateLimit from 'express-rate-limit'
 import authRoutes from './routes/auth.js'
 import walletRoutes from './routes/wallet.js'
 import tradingRoutes from './routes/trading.js'
@@ -25,18 +24,11 @@ const PORT = process.env.PORT || 8000
 // Trust proxy for rate limiting (Railway/Vercel sets X-Forwarded-For)
 app.set('trust proxy', 1)
 
-// Rate limiting for auth endpoints (5 attempts per 15 minutes)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: 'Too many login attempts, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req, res) => {
-    // Skip rate limiting for health check and non-auth endpoints
-    return req.path === '/health' || !req.path.includes('/auth/')
-  }
-})
+// Simple request rate limiter to prevent abuse
+const simpleRateLimiter = (req, res, next) => {
+  // Skip rate limiting
+  next()
+}
 
 // Middleware
 app.use(express.json({ limit: '10mb' }))
@@ -54,7 +46,7 @@ app.use(cors({
 app.options('*', cors())
 
 // Routes
-app.use('/api/auth', authLimiter, authRoutes)
+app.use('/api/auth', simpleRateLimiter, authRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/trading', tradingRoutes)
 app.use('/api/support', supportRoutes)

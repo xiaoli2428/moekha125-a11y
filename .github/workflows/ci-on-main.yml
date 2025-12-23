@@ -14,55 +14,60 @@ jobs:
   detect-and-test:
     name: Detect language and run tests
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Detect language and lockfile
       - name: Detect package manager and lockfile
         id: detect
         run: |
-          # Detect project type
+          # Detect if this is Node.js or Python or neither
           if [ -f package.json ] || [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
-            echo "manager=node" > $GITHUB_OUTPUT
+            echo "manager=node" >> $GITHUB_OUTPUT
           elif [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f Pipfile ] || [ -f setup.cfg ] || [ -f setup.py ]; then
-            echo "manager=python" > $GITHUB_OUTPUT
+            echo "manager=python" >> $GITHUB_OUTPUT
           else
-            echo "manager=none" > $GITHUB_OUTPUT
+            echo "manager=none" >> $GITHUB_OUTPUT
           fi
 
-          # Detect presence of Node lockfile for cache decision
+          # Detect if a Node.js lockfile is present
           if [ -f package-lock.json ] || [ -f yarn.lock ] || [ -f pnpm-lock.yaml ] || [ -f npm-shrinkwrap.json ]; then
-            echo "lockfile=true" > $GITHUB_OUTPUT
+            echo "lockfile=true" >> $GITHUB_OUTPUT
           else
-            echo "lockfile=false" > $GITHUB_OUTPUT
+            echo "lockfile=false" >> $GITHUB_OUTPUT
           fi
 
+      # Step 3a: Setup Node.js (with cache)
       - name: Setup Node (with cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
+      # Step 3b: Setup Node.js (no cache)
       - name: Setup Node (no cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@d747bb181d8c44152b13cd7c2ae7d7bfb383b12d
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
+      # Step 4: Install and test (npm)
       - name: Install and test (npm)
         if: ${{ steps.detect.outputs.manager == 'node' }}
         run: |
           set -euo pipefail
-          # Deterministic install when lockfile exists
+          # Install dependencies
           if [ -f package-lock.json ]; then
             npm ci --no-audit --prefer-offline
           else
             npm install --no-audit --prefer-offline
           fi
 
-          # Run npm test only if a test script exists
-          # Exit code 0 when test script exists; 1 otherwise
+          # Run tests if script is defined
           if node -e "try { const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1); } catch(e){ process.exit(1); }"; then
             echo "npm test script found — running tests"
             npm test
@@ -70,20 +75,23 @@ jobs:
             echo "No npm test script defined; skipping npm test"
           fi
 
+      # Step 5: Cache pip
       - name: Cache pip
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/cache@9cbf8fb1e5229a55fa5ea7dc36ec4428d2d89da8
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
 
+      # Step 6: Set up Python
       - name: Set up Python
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/setup-python@70bb553c9df08e1f410c506d9a3611616e04472d
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
+      # Step 7: Install and test (Python)
       - name: Install and test (python)
         if: ${{ steps.detect.outputs.manager == 'python' }}
         run: |
@@ -102,6 +110,7 @@ jobs:
           fi
           pytest -q
 
+      # Step 8: No-op if no recognized manager
       - name: No-op
         if: ${{ steps.detect.outputs.manager == 'none' }}
         run: echo "No recognized test config found; ensure you add tests or update CI workflow"

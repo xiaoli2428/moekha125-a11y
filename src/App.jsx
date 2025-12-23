@@ -3,9 +3,6 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { authAPI } from './services/api';
 
-// CRITICAL: Only LoginPage loads eagerly - everything else lazy loaded
-import LoginPage from './pages/LoginPage';
-
 // Lazy load all other pages to speed up initial homepage
 const CustomerService = lazy(() => import('./components/CustomerService'));
 const SideMenu = lazy(() => import('./components/SideMenu'));
@@ -242,23 +239,12 @@ export default function App() {
             }
           />
 
-          {/* LEGACY LOGIN ROUTE (for backwards compatibility) */}
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/app" />
-              ) : (
-                <LoginPage onLogin={handleLogin} />
-              )
-            }
-          />
+          {/* HOME PAGE - DIRECT TO DAPP (wallet-first flow like ddefi3.com) */}
+          <Route path="/" element={<DappPage />} />
 
-          {/* DAPP PAGE - ALL WEB3 LOGIC HERE */}
-          <Route
-            path="/app"
-            element={isAuthenticated ? <DappPage /> : <Navigate to="/" />}
-          />
+          {/* Legacy routes for backwards compatibility */}
+          <Route path="/app" element={<DappPage />} />
+          <Route path="/login" element={<DappPage />} />
 
           {/* LEGACY DASHBOARD ROUTES (for backwards compatibility) */}
           <Route

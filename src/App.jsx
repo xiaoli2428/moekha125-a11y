@@ -227,18 +227,6 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* FAST LOGIN PAGE - NO WEB3 */}
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/app" />
-              ) : (
-                <LoginPage onLogin={handleLogin} />
-              )
-            }
-          />
-
           {/* HOME PAGE - DIRECT TO DAPP (wallet-first flow like ddefi3.com) */}
           <Route path="/" element={<DappPage />} />
 

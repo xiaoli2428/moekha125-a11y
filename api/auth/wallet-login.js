@@ -63,12 +63,6 @@ export default async function handler(req, res) {
       }
 
       user = newUser;
-    } else {
-      // Update last_seen for existing user
-      await supabase
-        .from('users')
-        .update({ last_seen: new Date().toISOString() })
-        .eq('id', user.id);
     }
 
     // Generate token

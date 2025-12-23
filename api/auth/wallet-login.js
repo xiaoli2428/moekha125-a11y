@@ -53,15 +53,22 @@ export default async function handler(req, res) {
     // If user doesn't exist, create a new one
     if (!user) {
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;
+      const dummyEmail = `${address.toLowerCase()}@wallet.onchainweb`;
+      const dummyPasswordHash = 'wallet_login_no_password'; // Wallet users don't have passwords
 
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
           username,
+          email: dummyEmail,
+          password_hash: dummyPasswordHash,
           wallet_address: address.toLowerCase(),
-          role: 'user'
+          role: 'user',
+          balance: 0,
+          status: 'active',
+          credit_score: 100
         })
-        .select()
+        .select('id, email, username, wallet_address, role, created_at')
         .single();
 
       if (createError) {

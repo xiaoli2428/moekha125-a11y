@@ -16,12 +16,7 @@ export default function LandingPage() {
             description: 'Automated trading strategies powered by artificial intelligence'
         },
         {
-            icon: '🔐',
-            title: 'Secure Wallet',
-            description: 'Full control over your crypto assets with advanced security'
-        },
-        {
-            icon: '📊',
+            icon: '�',
             title: 'Live Market Data',
             description: 'Real-time prices and market analysis for informed decisions'
         },
@@ -34,6 +29,11 @@ export default function LandingPage() {
             icon: '⚡',
             title: 'Fast Execution',
             description: 'Lightning-fast order execution and settlements'
+        },
+        {
+            icon: '🔒',
+            title: 'Secure & Reliable',
+            description: 'Enterprise-grade security with 99.9% uptime'
         },
     ];
 
@@ -112,8 +112,8 @@ export default function LandingPage() {
                             onMouseEnter={() => setHoveredFeature(idx)}
                             onMouseLeave={() => setHoveredFeature(null)}
                             className={`p-8 rounded-lg border transition-all duration-300 cursor-pointer ${hoveredFeature === idx
-                                    ? 'bg-purple-600/20 border-purple-500 scale-105'
-                                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                                ? 'bg-purple-600/20 border-purple-500 scale-105'
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
                                 }`}
                         >
                             <div className="text-5xl mb-4">{feature.icon}</div>
@@ -181,9 +181,9 @@ export default function LandingPage() {
                         <div>
                             <h4 className="font-bold mb-4">Products</h4>
                             <ul className="space-y-2 text-gray-400 text-sm">
-                                <li><a href="/app" className="hover:text-white transition">Trading</a></li>
-                                <li><a href="/app" className="hover:text-white transition">AI Arbitrage</a></li>
-                                <li><a href="/app" className="hover:text-white transition">Wallet</a></li>
+                                <li><a href="/app" className="hover:text-white transition">Trading Platform</a></li>
+                                <li><a href="/app" className="hover:text-white transition">Market Data</a></li>
+                                <li><a href="/app" className="hover:text-white transition">AI Tools</a></li>
                             </ul>
                         </div>
                         <div>

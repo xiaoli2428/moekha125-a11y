@@ -1,33 +1,29 @@
-import bcrypt from 'bcrypt';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-  if (!url || !key) throw new Error('Supabase config missing');
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-}
-
-function generateToken(payload) {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error('JWT_SECRET missing');
-  return jwt.sign(payload, secret, { expiresIn: '7d' });
-}
-
 export default async function handler(req, res) {
-  try {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Dynamic imports
+    const bcrypt = await import('bcrypt').then(m => m.default);
+    const { createClient } = await import('@supabase/supabase-js');
+    const jwt = await import('jsonwebtoken').then(m => m.default);
 
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const supabase = getSupabase();
+    // Initialize Supabase
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) return res.status(500).json({ error: 'Supabase config missing' });
+
+    const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: user, error } = await supabase
       .from('users')
       .select('id, email, username, password_hash, role, status')
@@ -40,7 +36,10 @@ export default async function handler(req, res) {
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = generateToken({ userId: user.id, role: user.role || 'user' });
+    // Generate token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'JWT_SECRET missing' });
+    const token = jwt.sign({ userId: user.id, role: user.role || 'user' }, secret, { expiresIn: '7d' });
 
     return res.status(200).json({
       message: 'Login successful',

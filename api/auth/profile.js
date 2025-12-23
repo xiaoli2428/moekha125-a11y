@@ -1,31 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-function getSupabase() {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY;
-    if (!url || !key) throw new Error('Supabase config missing');
-    return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-}
-
-function verifyToken(token) {
-    try {
-        const secret = process.env.JWT_SECRET;
-        if (!secret) throw new Error('JWT_SECRET missing');
-        return jwt.verify(token, secret);
-    } catch (error) {
-        return null;
-    }
-}
-
 export default async function handler(req, res) {
-    try {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-        if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    try {
         if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+        // Dynamic imports
+        const { createClient } = await import('@supabase/supabase-js');
+        const jwt = await import('jsonwebtoken').then(m => m.default);
 
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -33,13 +18,24 @@ export default async function handler(req, res) {
         }
 
         const token = authHeader.substring(7);
-        const decoded = verifyToken(token);
 
-        if (!decoded) {
+        // Verify token
+        const secret = process.env.JWT_SECRET;
+        if (!secret) return res.status(500).json({ error: 'JWT_SECRET missing' });
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, secret);
+        } catch (e) {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        const supabase = getSupabase();
+        // Initialize Supabase
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_KEY;
+        if (!url || !key) return res.status(500).json({ error: 'Supabase config missing' });
+
+        const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
         const { data: user, error } = await supabase
             .from('users')
             .select('id, email, username, wallet_address, role, balance, credit_score, status, created_at')
@@ -54,7 +50,7 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Account is suspended or banned' });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             id: user.id,
             email: user.email,
             username: user.username,
@@ -66,6 +62,6 @@ export default async function handler(req, res) {
         });
     } catch (error) {
         console.error('Profile error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }

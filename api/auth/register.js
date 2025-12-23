@@ -1,28 +1,19 @@
-import bcrypt from 'bcrypt';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-  if (!url || !key) throw new Error('Supabase config missing');
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-}
-
-function generateToken(payload) {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error('JWT_SECRET missing');
-  return jwt.sign(payload, secret, { expiresIn: '7d' });
-}
-
 export default async function handler(req, res) {
-  try {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Dynamic imports inside handler
+    const bcrypt = await import('bcrypt').then(m => m.default);
+    const { createClient } = await import('@supabase/supabase-js');
+    const jwt = await import('jsonwebtoken').then(m => m.default);
 
     const { email, password, username } = req.body || {};
 
@@ -34,7 +25,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Password must be 6+ characters' });
     }
 
-    const supabase = getSupabase();
+    // Initialize Supabase
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) {
+      return res.status(500).json({ error: 'Supabase config missing' });
+    }
+
+    const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+
+    // Check email exists
     const { data: existing } = await supabase
       .from('users')
       .select('id')
@@ -45,8 +45,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Insert user
     const { data: user, error } = await supabase
       .from('users')
       .insert([{
@@ -66,7 +68,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to create user', detail: error.message });
     }
 
-    const token = generateToken({ userId: user.id, role: user.role });
+    // Generate token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: 'JWT_SECRET missing' });
+    }
+    const token = jwt.sign({ userId: user.id, role: user.role }, secret, { expiresIn: '7d' });
 
     return res.status(201).json({
       message: 'Registration successful',
@@ -77,9 +84,5 @@ export default async function handler(req, res) {
     console.error('Register error:', error);
     return res.status(500).json({ error: error.message || 'Server error' });
   }
-}
-  } catch (error) {
-  console.error('Register error:', error);
-  res.status(500).json({ error: 'Internal server error' });
 }
 }

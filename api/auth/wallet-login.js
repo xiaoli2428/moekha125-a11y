@@ -51,8 +51,7 @@ export default async function handler(req, res) {
         .insert({
           username,
           wallet_address: address.toLowerCase(),
-          role: 'user',
-          profile_data: {}
+          role: 'user'
         })
         .select('id, email, username, wallet_address, role, created_at')
         .single();

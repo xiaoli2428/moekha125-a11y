@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { authAPI } from './services/api';
 
+// IMPORTANT: DappPage loads EAGERLY (not lazy) so wallet connect screen appears immediately
+import DappPage from './pages/DappPage';
+
 // Lazy load all other pages to speed up initial homepage
 const CustomerService = lazy(() => import('./components/CustomerService'));
 const SideMenu = lazy(() => import('./components/SideMenu'));
-const DappPage = lazy(() => import('./pages/DappPage'));
 const ProfileDropdown = lazy(() => import('./components/ProfileDropdown'));
 const BottomNav = lazy(() => import('./components/BottomNav'));
 const Home = lazy(() => import('./pages/Home'));

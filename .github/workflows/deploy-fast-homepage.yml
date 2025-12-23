@@ -1,51 +1,34 @@
-name: Deploy fast-homepage to GitHub Pages
+name: Deploy to Vercel
 
 on:
   push:
     branches:
+      - main
       - copilot/link-with-subbase
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@b9c1a5ea8f1195a221f10bcfa1e534b8f8a80ad3
+      
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@5e1c2e9da6bf4a0e70669e84d577d2ae356fc213
         with:
           node-version: '18'
           cache: 'npm'
-
+      
       - name: Install dependencies
-        working-directory: fast-homepage
         run: npm ci
-
+      
       - name: Build
-        working-directory: fast-homepage
-        env:
-          GITHUB_PAGES: true
         run: npm run build
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@c2f86e553e1841b17385cb818ad5e57cf349d49e
         with:
-          path: fast-homepage/dist
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./

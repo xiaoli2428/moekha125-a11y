@@ -1,4 +1,5 @@
 import { handleCors, setCorsHeaders, authenticate } from '../../lib/auth.js';
+import { verifyToken } from '../../lib/jwt.js';
 import supabase from '../../lib/supabase.js';
 
 export default async function handler(req, res) {

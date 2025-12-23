@@ -29,11 +29,14 @@ export default function DappPage() {
   useEffect(() => {
     // Check if user is authenticated
     const token = localStorage.getItem('token');
+
     if (!token) {
-      navigate('/');
+      // User not authenticated - show wallet connect screen
+      setLoading(false);
       return;
     }
 
+    // User is authenticated - load dashboard
     loadDashboard();
     setAccountMode(demoAccountService.getAccountMode());
 
@@ -55,11 +58,24 @@ export default function DappPage() {
       // If auth fails, redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/');
+      setLoading(false);
     } finally {
       setLoading(false);
     }
   };
+
+  // ========== WALLET CONNECT (not authenticated) ==========
+  if (!user && loading === false) {
+    return <WalletConnectHome />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center pb-20">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   const toggleAccountMode = () => {
     const newMode = demoAccountService.toggleAccountMode();
@@ -111,11 +127,10 @@ export default function DappPage() {
           {/* Demo/Real Toggle */}
           <button
             onClick={toggleAccountMode}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              accountMode === 'demo'
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                : 'bg-green-500/20 text-green-400 border border-green-500/50'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${accountMode === 'demo'
+              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+              : 'bg-green-500/20 text-green-400 border border-green-500/50'
+              }`}
           >
             <span className={`w-2 h-2 rounded-full ${accountMode === 'demo' ? 'bg-blue-400' : 'bg-green-400'} animate-pulse`}></span>
             {accountMode === 'demo' ? 'Demo' : 'Real'}
@@ -265,9 +280,8 @@ export default function DappPage() {
               {transactions.slice(0, 3).map((tx) => (
                 <div key={tx.id} className="flex justify-between items-center p-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      tx.amount >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${tx.amount >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'
+                      }`}>
                       {tx.amount >= 0 ? (
                         <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -298,6 +312,169 @@ export default function DappPage() {
       {/* Crypto News */}
       <div className="px-4 pb-4">
         <CryptoNews />
+      </div>
+    </div>
+  );
+}
+
+// ========== WALLET CONNECT HOME SCREEN (unauthenticated users) ==========
+function WalletConnectHome() {
+  const [loading, setLoading] = useState(false);
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [emailForm, setEmailForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleWalletConnect = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      // Only import web3modal setup when user clicks "Connect Wallet"
+      const { walletLogin } = await import('../web3modal/setup');
+
+      const user = await walletLogin();
+      localStorage.setItem('token', user.token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Reload page to show dashboard
+      window.location.reload();
+    } catch (err) {
+      setError(err.message || 'Wallet connection failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authAPI.login({
+        email: emailForm.email,
+        password: emailForm.password,
+      });
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      window.location.reload();
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      {/* Header with Logo */}
+      <div className="bg-gradient-to-br from-purple-600/30 to-indigo-600/30 p-6 text-center">
+        <h1 className="text-3xl font-bold mb-2">OnchainWeb</h1>
+        <p className="text-gray-400">DeFi Trading Platform</p>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          {/* Wallet Connect Card */}
+          <div className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-2xl p-8 border border-purple-500/30 mb-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Connect Wallet</h2>
+              <p className="text-gray-400 text-sm">Start trading with your Web3 wallet</p>
+            </div>
+
+            <button
+              onClick={handleWalletConnect}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300 mb-4"
+            >
+              {loading ? 'Connecting...' : 'Connect Wallet'}
+            </button>
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-300 mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="border-t border-white/10 pt-4">
+              <button
+                onClick={() => setShowEmailLogin(!showEmailLogin)}
+                className="w-full text-sm text-purple-400 hover:text-purple-300 transition"
+              >
+                {showEmailLogin ? 'Hide Email Login' : 'Login with Email'}
+              </button>
+            </div>
+          </div>
+
+          {/* Email Login Form (hidden by default) */}
+          {showEmailLogin && (
+            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+              <h3 className="text-lg font-semibold mb-4">Email Login</h3>
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={emailForm.email}
+                  onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                  disabled={loading}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={emailForm.password}
+                  onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                  disabled={loading}
+                />
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-300">
+                    {error}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-all"
+                >
+                  {loading ? 'Logging in...' : 'Login'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Features */}
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="text-2xl font-bold text-green-400 mb-1">10K+</div>
+              <div className="text-xs text-gray-400">Active Traders</div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
+              <div className="text-xs text-gray-400">Live Trading</div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="text-2xl font-bold text-purple-400 mb-1">0.1%</div>
+              <div className="text-xs text-gray-400">Min Fees</div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="text-2xl font-bold text-indigo-400 mb-1">AI</div>
+              <div className="text-xs text-gray-400">Bot Trading</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-black/50 border-t border-white/10 p-4 text-center text-sm text-gray-500">
+        <p>© 2025 OnchainWeb. All rights reserved.</p>
       </div>
     </div>
   );

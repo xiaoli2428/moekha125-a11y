@@ -18,6 +18,9 @@ async function getWeb3Modal() {
   const { createWeb3Modal, defaultConfig } = await import('@web3modal/ethers5/react');
   const { ethers } = await import('ethers');
 
+  // Web3Modal Project ID - get yours from: https://cloud.walletconnect.com
+  // This is the official Onchainweb project ID for production
+  // To use your own, sign up at WalletConnect Cloud and replace this value
   const projectId = '8e351899f7e19103239159c134bd210b';
 
   const chains = [

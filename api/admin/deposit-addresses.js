@@ -1,55 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
-
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
-
-async function verifyAdmin(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    const { data: user } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', decoded.userId)
-      .single();
-    
-    if (!user || (user.role !== 'admin' && user.role !== 'master')) {
-      return null;
-    }
-    
-    return user;
-  } catch {
-    return null;
-  }
-}
+import { handleCors, setCorsHeaders, authenticate, isAdmin } from '../../lib/auth.js';
+import supabase from '../../lib/supabase.js';
 
 export default async function handler(req, res) {
+  handleCors(req, res);
   setCorsHeaders(res);
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const admin = await verifyAdmin(req);
-  if (!admin) {
-    return res.status(401).json({ error: 'Unauthorized - Admin access required' });
+  const user = await authenticate(req);
+  if (!user || !isAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required' });
   }
 
   try {

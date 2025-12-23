@@ -1,4 +1,8 @@
 {
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "functions": {
     "api/**/*.js": {
       "memory": 256,

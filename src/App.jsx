@@ -1,27 +1,37 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import CustomerService from './components/CustomerService';
-import SideMenu from './components/SideMenu';
-import LoginPage from './pages/LoginPage';
-import DappPage from './pages/DappPage';
-import ProfileDropdown from './components/ProfileDropdown';
-import BottomNav from './components/BottomNav';
-import Home from './pages/Home';
-import Market from './pages/Market';
-import BinaryTrading from './pages/BinaryTrading';
-import AIArbitrage from './pages/AIArbitrage';
-import WalletNew from './pages/WalletNew';
-import Admin from './pages/Admin';
-import About from './pages/About';
-import Support from './pages/Support';
-import Account from './pages/Account';
-import AssetHistory from './pages/AssetHistory';
-import Settings from './pages/Settings';
-import Referral from './pages/Referral';
-import News from './pages/News';
-import NewsArticle from './pages/NewsArticle';
 import { authAPI } from './services/api';
+
+// IMPORTANT: DappPage loads EAGERLY (not lazy) so wallet connect screen appears immediately
+import DappPage from './pages/DappPage';
+
+// Lazy load all other pages to speed up initial homepage
+const CustomerService = lazy(() => import('./components/CustomerService'));
+const SideMenu = lazy(() => import('./components/SideMenu'));
+const ProfileDropdown = lazy(() => import('./components/ProfileDropdown'));
+const BottomNav = lazy(() => import('./components/BottomNav'));
+const Home = lazy(() => import('./pages/Home'));
+const Market = lazy(() => import('./pages/Market'));
+const BinaryTrading = lazy(() => import('./pages/BinaryTrading'));
+const AIArbitrage = lazy(() => import('./pages/AIArbitrage'));
+const WalletNew = lazy(() => import('./pages/WalletNew'));
+const Admin = lazy(() => import('./pages/Admin'));
+const About = lazy(() => import('./pages/About'));
+const Support = lazy(() => import('./pages/Support'));
+const Account = lazy(() => import('./pages/Account'));
+const AssetHistory = lazy(() => import('./pages/AssetHistory'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Referral = lazy(() => import('./pages/Referral'));
+const News = lazy(() => import('./pages/News'));
+const NewsArticle = lazy(() => import('./pages/NewsArticle'));
+
+// Loading fallback for lazy components
+const PageLoader = () => (
+  <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="animate-pulse text-white text-xl">Loading...</div>
+  </div>
+);
 
 /**
  * OPTIMIZED ROUTING STRUCTURE:
@@ -34,7 +44,7 @@ import { authAPI } from './services/api';
 function AppLayout({ children, onLogout, userRole, user }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  
+
   // Pages that should use mobile app style (bottom nav)
   const mobileStylePages = ['/dashboard', '/market', '/trade', '/ai-arbitrage', '/wallet'];
   const isMobileStylePage = mobileStylePages.includes(location.pathname);
@@ -102,7 +112,7 @@ function AppLayout({ children, onLogout, userRole, user }) {
           </div>
         </nav>
       )}
-      
+
       {/* Compact Header for main pages */}
       {isMobileStylePage && (
         <div className="fixed top-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur-lg border-b border-white/10">
@@ -136,15 +146,15 @@ function AppLayout({ children, onLogout, userRole, user }) {
           </div>
         </div>
       )}
-      
+
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-      
+
       {/* Main Content with padding for fixed headers */}
       <main className={`flex-1 ${isMobileStylePage ? 'pt-14' : ''}`}>{children}</main>
-      
+
       {/* Bottom Navigation for main pages */}
       {isMobileStylePage && <BottomNav />}
-      
+
       {(userRole === 'admin' || userRole === 'master') && !isMobileStylePage && (
         <footer className="bg-black/30 border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 text-center">
@@ -157,7 +167,7 @@ function AppLayout({ children, onLogout, userRole, user }) {
           </div>
         </footer>
       )}
-      
+
       {/* Customer Service floating button */}
       <CustomerService />
     </div>
@@ -165,29 +175,38 @@ function AppLayout({ children, onLogout, userRole, user }) {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState('user');
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Instant check from localStorage - no API call blocking
+    return !!localStorage.getItem('token');
+  });
+  const [userRole, setUserRole] = useState(() => {
+    const cached = localStorage.getItem('user');
+    return cached ? JSON.parse(cached).role || 'user' : 'user';
+  });
+  const [user, setUser] = useState(() => {
+    const cached = localStorage.getItem('user');
+    return cached ? JSON.parse(cached) : null;
+  });
 
   useEffect(() => {
-    checkAuth();
+    // Validate token in background - don't block initial render
+    if (isAuthenticated) {
+      validateToken();
+    }
   }, []);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const profile = await authAPI.getProfile();
-        setIsAuthenticated(true);
-        setUserRole(profile.role);
-        setUser(profile);
-      } catch (error) {
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-      }
+  const validateToken = async () => {
+    try {
+      const profile = await authAPI.getProfile();
+      setUserRole(profile.role);
+      setUser(profile);
+      localStorage.setItem('user', JSON.stringify(profile));
+    } catch (error) {
+      // Token invalid - clear and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
     }
-    setLoading(false);
   };
 
   const handleLogin = (data) => {
@@ -195,6 +214,7 @@ export default function App() {
     if (data?.user) {
       setUser(data.user);
       setUserRole(data.user.role || 'user');
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
   };
 
@@ -205,82 +225,52 @@ export default function App() {
     setUser(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <BrowserRouter>
-      <Routes>
-        {/* FAST LOGIN PAGE - NO WEB3 */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/app" />
-            ) : (
-              <LoginPage onLogin={handleLogin} />
-            )
-          }
-        />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* HOME PAGE - DIRECT TO DAPP (wallet-first flow like ddefi3.com) */}
+          <Route path="/" element={<DappPage />} />
 
-        {/* LEGACY LOGIN ROUTE (for backwards compatibility) */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/app" />
-            ) : (
-              <LoginPage onLogin={handleLogin} />
-            )
-          }
-        />
+          {/* Legacy routes for backwards compatibility */}
+          <Route path="/app" element={<DappPage />} />
+          <Route path="/login" element={<DappPage />} />
 
-        {/* DAPP PAGE - ALL WEB3 LOGIC HERE */}
-        <Route
-          path="/app"
-          element={isAuthenticated ? <DappPage /> : <Navigate to="/" />}
-        />
+          {/* LEGACY DASHBOARD ROUTES (for backwards compatibility) */}
+          <Route
+            path="/dashboard/*"
+            element={
+              isAuthenticated ? (
+                <AppLayout onLogout={handleLogout} userRole={userRole} user={user}>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/market" element={<Market />} />
+                    <Route path="/trade" element={<BinaryTrading />} />
+                    <Route path="/ai-arbitrage" element={<AIArbitrage />} />
+                    <Route path="/wallet" element={<WalletNew />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/support" element={<Support />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/asset-history" element={<AssetHistory />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/referral" element={<Referral />} />
+                    <Route path="/news" element={<News />} />
+                    <Route path="/news/:id" element={<NewsArticle />} />
+                    {(userRole === 'admin' || userRole === 'master') && (
+                      <Route path="/admin" element={<Admin userRole={userRole} />} />
+                    )}
+                    <Route path="*" element={<Navigate to="/dashboard" />} />
+                  </Routes>
+                </AppLayout>
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
 
-        {/* LEGACY DASHBOARD ROUTES (for backwards compatibility) */}
-        <Route
-          path="/dashboard/*"
-          element={
-            isAuthenticated ? (
-              <AppLayout onLogout={handleLogout} userRole={userRole} user={user}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/market" element={<Market />} />
-                  <Route path="/trade" element={<BinaryTrading />} />
-                  <Route path="/ai-arbitrage" element={<AIArbitrage />} />
-                  <Route path="/wallet" element={<WalletNew />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/asset-history" element={<AssetHistory />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/referral" element={<Referral />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/news/:id" element={<NewsArticle />} />
-                  {(userRole === 'admin' || userRole === 'master') && (
-                    <Route path="/admin" element={<Admin userRole={userRole} />} />
-                  )}
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
-                </Routes>
-              </AppLayout>
-            ) : (
-              <Navigate to="/" />
-            )
-          }
-        />
-
-        {/* Catch-all: redirect to login */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Catch-all: redirect to login */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Suspense>    </BrowserRouter>
   );
 }

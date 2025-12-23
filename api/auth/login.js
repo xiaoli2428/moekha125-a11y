@@ -1,86 +1,54 @@
+// Static imports (required for Vercel serverless)
+import bcrypt from 'bcrypt';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
-
-function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-}
-
-function setCorsHeaders(res) {
+// Main handler
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req, res) {
-  setCorsHeaders(res);
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { email, wallet_address } = req.body;
-
-    if (!email && !wallet_address) {
-      return res.status(400).json({ error: 'Email or wallet address required' });
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Find user by email or wallet
-    let query = supabase
+    const { email, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+    // Initialize Supabase
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) return res.status(500).json({ error: 'Supabase config missing' });
+
+    const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+    const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, username, wallet_address, role, short_uid, created_at, last_seen');
-    
-    if (email) {
-      query = query.eq('email', email);
-    } else {
-      query = query.ilike('wallet_address', wallet_address);
-    }
-    
-    const { data: user, error } = await query.maybeSingle();
+      .select('id, email, username, password_hash, role, status')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (error) {
-      console.error('Login query error:', error);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (user.status !== 'active') return res.status(403).json({ error: 'Account suspended' });
 
-    // Update last_seen
-    await supabase
-      .from('users')
-      .update({ last_seen: new Date().toISOString() })
-      .eq('id', user.id);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
     // Generate token
-    const token = generateToken({ userId: user.id, role: user.role || 'user' });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'JWT_SECRET missing' });
+    const token = jwt.sign({ userId: user.id, role: user.role || 'user' }, secret, { expiresIn: '7d' });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        walletAddress: user.wallet_address,
-        role: user.role || 'user',
-        shortUid: user.short_uid
-      }
+      user: { id: user.id, email: user.email, username: user.username, role: user.role || 'user' }
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Server error' });
   }
 }

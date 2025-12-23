@@ -1,157 +1,291 @@
-# Deployment Guide for moekha125-a11y
+# Deployment Guide
 
-This guide describes the best practices for deploying the moekha125-a11y Node.js project. Follow these steps to ensure secure and reliable releases. Adapt commands as needed for your infrastructure.
+Complete deployment instructions for Onchainweb platform.
 
----
+## Architecture Overview
 
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Manual Deployment Steps](#manual-deployment-steps)
-3. [Automated Deployment Steps](#automated-deployment-steps)
-4. [Environment Configurations](#environment-configurations)
-5. [Health Checks](#health-checks)
-6. [Security Best Practices](#security-best-practices)
-7. [Update & Rollback Procedures](#update--rollback-procedures)
-8. [FAQ](#faq)
-9. [References](#references)
+- **Frontend**: React + Vite → Vercel
+- **Backend**: Node.js + Express → Railway/Render
+- **Database**: PostgreSQL → Supabase
 
----
+## Part 1: Database Setup (Supabase)
 
-## Prerequisites
-- Node.js v18+ installed ([download](https://nodejs.org/))
-- npm or yarn
-- Git
-- Access to target server or cloud provider
-- Proper environment variables configured
-- Required permissions for deployment
+### 1. Create Supabase Project
 
-Sample checks:
+1. Go to [supabase.com](https://supabase.com)
+2. Click "New Project"
+3. Choose organization and set project details:
+   - Name: `onchainweb`
+   - Database Password: (save this securely)
+   - Region: Choose closest to your users
+
+### 2. Load Database Schema (In This Order)
+
+Open **SQL Editor** in Supabase dashboard and run each file in order:
+
+#### Step 1: Core Schema
+1. Create new query
+2. Open `server/database/schema.sql`
+3. Copy entire contents and paste into SQL Editor
+4. Click **Run** and verify no errors
+5. Check "Tables" section - should see: users, wallets, transactions, binary_trades, support_tickets
+
+#### Step 2: Additional Tables (Run Each Separately)
+5. Run `server/database/deposit_addresses_and_coins.sql` (deposit addresses for cryptocurrencies)
+6. Run `server/database/kyc_tables.sql` (KYC verification tables)
+7. Run `server/database/trading_levels.sql` (user trading tier configurations)
+8. Run `server/database/master_account.sql` (master admin role setup)
+
+**⚠️ Important**: Run these files in order because they may have foreign key dependencies.
+
+### 3. Get API Credentials
+
+1. Go to Settings → API
+2. Copy and save:
+   - **Project URL**: `https://xxx.supabase.co`
+   - **anon key**: `eyJ...` (public, used by frontend)
+   - **service_role secret**: `eyJ...` (⚠️ KEEP SECURE - used by backend only)
+
+### 4. Verify Schema Loaded
+
+In Supabase SQL Editor, run:
+```sql
+SELECT COUNT(*) as table_count FROM information_schema.tables 
+WHERE table_schema = 'public';
+```
+
+Expected: At least 10+ tables should exist
+
+## Part 2: Backend Deployment (Railway)
+
+### Option A: Railway (Recommended)
+
+1. Go to [railway.app](https://railway.app)
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Connect your GitHub account and select your repo
+4. Configure build settings:
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+
+5. Add environment variables:
+```env
+PORT=3001
+NODE_ENV=production
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_KEY=your_service_key
+JWT_SECRET=generate_random_64_char_string
+JWT_EXPIRES_IN=7d
+FRONTEND_URL=https://your-frontend-url.vercel.app
+```
+
+6. Deploy and copy the generated URL (e.g., `https://xxx.railway.app`)
+
+### Option B: Render
+
+1. Go to [render.com](https://render.com)
+2. New → Web Service
+3. Connect repository
+4. Configure:
+   - **Name**: `onchainweb-api`
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Plan**: Free
+
+5. Add environment variables (same as Railway above)
+6. Create web service and copy URL
+
+## Part 3: Frontend Deployment (Vercel)
+
+### 1. Update Frontend API URL
+
+Before deploying, update the API URL in your frontend code:
+
+```javascript
+// src/config/api.js
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+```
+
+### 2. Deploy to Vercel
+
+1. Go to [vercel.com](https://vercel.com)
+2. Click "Add New" → "Project"
+3. Import your GitHub repository
+4. Configure:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `./` (leave as root)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+
+5. Add environment variable:
+   - Key: `VITE_API_URL`
+   - Value: Your Railway/Render backend URL (e.g., `https://xxx.railway.app/api`)
+
+6. Click "Deploy"
+
+### 3. Update Backend CORS
+
+After getting your Vercel URL:
+
+1. Go back to Railway/Render dashboard
+2. Update `FRONTEND_URL` environment variable to your Vercel URL
+3. Redeploy backend
+
+## Part 4: Testing Deployment
+
+### 1. Test Backend
+
 ```bash
-node -v
-npm -v # or yarn -v
-git --version
+# Health check
+curl https://your-backend-url.railway.app/api/health
+
+# Expected: {"status":"ok","timestamp":"..."}
 ```
 
-## Manual Deployment Steps
-1. **Clone repository:**
-    ```bash
-    git clone https://github.com/xiaoli2428/moekha125-a11y.git
-    cd moekha125-a11y
-    ```
-2. **Install dependencies:**
-    ```bash
-    npm install # or yarn install
-    ```
-3. **Set environment variables:**
-    - Copy `.env.example` to `.env` and edit as needed.
-    ```bash
-    cp .env.example .env
-    nano .env
-    ```
-4. **Build (if required):**
-    ```bash
-    npm run build
-    ```
-5. **Run migrations (if applicable):**
-    ```bash
-    npm run migrate
-    ```
-6. **Start the app:**
-    ```bash
-    npm start
-    # or use a process manager such as pm2
-    pm2 start npm --name "moekha125-a11y" -- start
-    ```
+### 2. Test Frontend
 
-## Automated Deployment Steps
-- Integrate with CI/CD (e.g., GitHub Actions, Jenkins, CircleCI).
+1. Open your Vercel URL in browser
+2. Try registering a new account
+3. Test login
+4. Check if API calls work
 
-**Sample workflow (GitHub Actions):**
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      - run: npm install
-      - run: npm run build
-      - run: npm start
+### 3. Create Admin Account
+
+```bash
+# Register admin via API
+curl -X POST https://your-backend-url.railway.app/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@onchainweb.com",
+    "password": "your_secure_password",
+    "username": "admin"
+  }'
+
+# Then manually update role in Supabase dashboard:
+# Go to Table Editor → users → find your admin user
+# Change role from "user" to "admin"
 ```
-- Connect secrets and environment variables securely via Actions or CI tool.
 
-## Environment Configurations
-- Store secrets in environment variables, not in code.
-- Sample `.env` file:
-    ```env
-    NODE_ENV=production
-    PORT=3000
-    DB_URL=your_database_url
-    JWT_SECRET=your_jwt_secret
-    ```
-- Use dotenv (`npm install dotenv`) for loading env files.
+## Part 5: Post-Deployment Configuration
 
-## Health Checks
-- Ensure service is running and healthy:
-    - Manual check: `curl http://localhost:3000/health`
-    - Automated: Integrate `/health` endpoint in monitoring tools (e.g., UptimeRobot, AWS ELB health checks).
-- Check process status (if using pm2):
-    ```bash
-    pm2 status
-    ```
+### Security Checklist
 
-## Security Best Practices
-- Do not commit secrets.
-- Use HTTPS for data transmission.
-- Keep Node.js and dependencies up to date: `npm audit fix`
-- Restrict network access (firewalls/security groups).
-- Sanitize user input to avoid injection attacks.
-- Enable logging and monitor suspicious activity.
+- ✅ Change all default passwords
+- ✅ Generate strong JWT_SECRET (64+ characters)
+- ✅ Enable HTTPS (automatic on Vercel/Railway)
+- ✅ Set secure CORS origins
+- ✅ Never commit `.env` files
+- ✅ Rotate Supabase service key periodically
 
-## Update & Rollback Procedures
-**Update:**
-1. Pull latest code:
-    ```bash
-    git pull origin main
-    npm install
-    npm run build
-    npm restart
-    ```
-2. Validate deployment (run health checks).
+### Performance Optimization
 
-**Rollback:**
-1. Checkout previous stable commit:
-    ```bash
-    git checkout <commit-hash>
-    npm install
-    npm run build
-    npm restart
-    ```
-2. Notify team and review root cause.
+1. **Enable Caching**: Add Redis for session management
+2. **Database Indexes**: Already included in schema
+3. **CDN**: Vercel automatically provides CDN
+4. **Monitoring**: Add Sentry for error tracking
 
-## FAQ
-**Q:** How do I change environment variables?
-> Edit the `.env` file and restart the server.
+## Troubleshooting
 
-**Q:** Who can deploy?
-> Those with proper access and permissions.
+### CORS Errors
 
-**Q:** Where are deployment logs?
-> Depends on your process manager (e.g., pm2, Docker logs).
+Problem: `Access-Control-Allow-Origin` error
 
-## References
-- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [pm2 Documentation](https://pm2.keymetrics.io/docs/usage/quick-start/)
-- [OWASP Node.js Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html)
+Solution:
+1. Verify `FRONTEND_URL` in backend env vars matches Vercel URL
+2. Ensure no trailing slash in URLs
+3. Check browser console for exact origin
 
----
+### Database Connection Fails
 
-For questions, contact a project maintainer.
+Problem: Cannot connect to Supabase
+
+Solution:
+1. Verify credentials are correct
+2. Check Supabase project is not paused
+3. Ensure service key has proper permissions
+
+### Authentication Not Working
+
+Problem: Login returns 401
+
+Solution:
+1. Check JWT_SECRET is set in backend
+2. Verify user exists in database
+3. Check user status is 'active'
+4. Clear browser cookies/localStorage
+
+## Environment Variables Reference
+
+### Backend (Railway/Render)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| PORT | Server port | 3001 |
+| NODE_ENV | Environment | production |
+| SUPABASE_URL | Supabase project URL | https://xxx.supabase.co |
+| SUPABASE_ANON_KEY | Public anon key | eyJhbGc... |
+| SUPABASE_SERVICE_KEY | Secret service key | eyJhbGc... |
+| JWT_SECRET | Token signing secret | random_64_char_string |
+| JWT_EXPIRES_IN | Token expiration | 7d |
+| FRONTEND_URL | Frontend origin | https://xxx.vercel.app |
+
+### Frontend (Vercel)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| VITE_API_URL | Backend API URL | https://xxx.railway.app/api |
+
+## Costs (Free Tier Limits)
+
+- **Supabase**: 500MB database, 2GB bandwidth/month
+- **Railway**: 500 hours/month, $5 credit
+- **Render**: 750 hours/month
+- **Vercel**: Unlimited bandwidth, 100GB/month
+
+All can run on free tier for development/testing.
+
+## Monitoring & Logs
+
+### Railway
+- View logs in dashboard under "Deployments"
+- Set up log drains for persistent storage
+
+### Render
+- Logs available in dashboard
+- Set up alerts for errors
+
+### Vercel
+- Function logs in dashboard
+- Runtime logs for debugging
+
+## Scaling Considerations
+
+When traffic grows:
+
+1. **Database**: Upgrade Supabase plan for more connections
+2. **Backend**: Railway/Render auto-scales, or move to AWS/GCP
+3. **Frontend**: Vercel handles scaling automatically
+4. **Caching**: Add Redis for sessions/rate limiting
+5. **CDN**: Use Cloudflare in front of everything
+
+## Support
+
+If deployment issues persist:
+
+1. Check service status pages (Vercel, Railway, Supabase)
+2. Review application logs
+3. Test each component independently
+4. Verify all environment variables are set
+
+## Next Steps
+
+After successful deployment:
+
+1. Set up custom domain
+2. Configure email service (SendGrid, Mailgun)
+3. Add monitoring (Sentry, LogRocket)
+4. Set up backup strategy
+5. Implement rate limiting
+6. Add analytics (Google Analytics, Plausible)

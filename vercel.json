@@ -3,19 +3,9 @@
   "installCommand": "npm ci",
   "outputDirectory": "dist",
   "framework": "vite",
-  "functions": {
-    "api/**/*.js": {
-      "memory": 256,
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
-    {
-      "source": "/((?!api).*)",
+      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

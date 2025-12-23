@@ -1,28 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseInstance = null;
+export function getSupabaseClient() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-function getSupabase() {
-    if (!supabaseInstance) {
-        const supabaseUrl = process.env.SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            throw new Error('Missing Supabase environment variables: SUPABASE_URL, SUPABASE_SERVICE_KEY');
-        }
-
-        supabaseInstance = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        });
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error(`Missing Supabase env vars: URL=${!!supabaseUrl}, KEY=${!!supabaseServiceKey}`);
     }
-    return supabaseInstance;
+
+    return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
 }
 
-export default new Proxy({}, {
-    get(target, prop) {
-        return getSupabase()[prop];
+// Lazy initialization
+let instance = null;
+
+const supabase = {
+    get from() {
+        if (!instance) instance = getSupabaseClient();
+        return instance.from.bind(instance);
     }
-});
+};
+
+export default supabase;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://moekha125-a11y.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://onchainweb-api-production.up.railway.app/api';
 
 export default function UniversalLogin({ onLogin }) {
   // Auth mode: 'wallet' | 'email-login' | 'email-register'
@@ -10,23 +10,23 @@ export default function UniversalLogin({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // Email form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  
+
   // Web3Modal hooks
   const { open } = useWeb3Modal();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const { disconnect } = useDisconnect();
-  
+
   // Server status
   const [serverOnline, setServerOnline] = useState(null);
-  
+
   // Check if mobile
-  const isMobile = typeof window !== 'undefined' && 
+  const isMobile = typeof window !== 'undefined' &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // Check server health on mount
@@ -50,47 +50,47 @@ export default function UniversalLogin({ onLogin }) {
       setError('Wallet not properly connected. Please try again.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       // Create ethers provider and signer
       const provider = new ethers.providers.Web3Provider(walletProvider);
       const signer = provider.getSigner();
-      
+
       // Create message to sign
       const timestamp = Date.now();
       const message = `Sign this message to authenticate with OnchainWeb.\n\nWallet: ${address}\nTimestamp: ${timestamp}`;
-      
+
       // Request signature
       const signature = await signer.signMessage(message);
-      
+
       // Send to backend
       const response = await fetch(`${API_URL}/auth/wallet-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address, message, signature })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Wallet login failed');
       }
-      
+
       // Store token and user
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
       setSuccess('Login successful!');
       setTimeout(() => onLogin?.(data), 500);
-      
+
     } catch (err) {
       console.error('Wallet login error:', err);
       setError(err.message || 'Failed to login with wallet');
       // Disconnect on error so user can retry
-      try { await disconnect(); } catch {}
+      try { await disconnect(); } catch { }
     } finally {
       setLoading(false);
     }
@@ -99,38 +99,38 @@ export default function UniversalLogin({ onLogin }) {
   // ========== EMAIL REGISTER ==========
   const handleEmailRegister = async (e) => {
     e.preventDefault();
-    
+
     if (!username || !email || !password) {
       setError('Please fill in all fields');
       return;
     }
-    
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Registration failed');
       }
-      
+
       setSuccess('Registration successful! Please login now.');
       setAuthMode('email-login');
       setPassword('');
       setUsername('');
-      
+
     } catch (err) {
       console.error('Register error:', err);
       setError(err.message || 'Failed to register');
@@ -142,34 +142,34 @@ export default function UniversalLogin({ onLogin }) {
   // ========== EMAIL LOGIN ==========
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setError('Please enter email and password');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
-      
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
       setSuccess('Login successful!');
       setTimeout(() => onLogin?.(data), 500);
-      
+
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login');
@@ -194,10 +194,9 @@ export default function UniversalLogin({ onLogin }) {
         <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
           {/* Server Status */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
-            <div className={`w-2 h-2 rounded-full ${
-              serverOnline === null ? 'bg-yellow-500 animate-pulse' :
-              serverOnline ? 'bg-green-500' : 'bg-red-500'
-            }`}></div>
+            <div className={`w-2 h-2 rounded-full ${serverOnline === null ? 'bg-yellow-500 animate-pulse' :
+                serverOnline ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
             <span>Server: {serverOnline === null ? 'Checking...' : serverOnline ? 'Online' : 'Offline'}</span>
           </div>
 
@@ -222,7 +221,7 @@ export default function UniversalLogin({ onLogin }) {
               {isConnected && (
                 <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-300 text-sm">
                   <span>✓ {address?.slice(0, 8)}...{address?.slice(-6)}</span>
-                  <button 
+                  <button
                     onClick={() => disconnect()}
                     className="text-xs px-2 py-1 bg-red-500/20 rounded hover:bg-red-500/30"
                   >
@@ -312,7 +311,7 @@ export default function UniversalLogin({ onLogin }) {
                   placeholder="you@example.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
                 <input
@@ -366,7 +365,7 @@ export default function UniversalLogin({ onLogin }) {
                   placeholder="johndoe"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
                 <input
@@ -378,7 +377,7 @@ export default function UniversalLogin({ onLogin }) {
                   placeholder="you@example.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
                 <input

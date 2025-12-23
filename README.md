@@ -1,155 +1,49 @@
-# Onchainweb - Full Stack Trading Platform
+# Moekha125 A11y
 
-A complete DeFi-style trading platform with wallet management, binary options trading, AI arbitrage, and customer support.
+## Public Release
+Welcome to the public release of **Moekha125-a11y**! This version is now open to all users, and documentation has been updated for clarity and ease of use.
 
-## 🚀 Features
+## Accessibility Statement
+**Moekha125-a11y** is committed to providing an accessible experience for all users. Features are designed and tested to meet common accessibility standards (such as WCAG 2.1 AA), including:
+- Keyboard navigation support
+- Screen reader compatibility
+- High contrast and scalable UI options
+- Clear and descriptive labels
 
-### User Features
-- 🔐 **Authentication**: Secure JWT-based auth with registration/login
-- 💰 **Wallet Management**: Deposit, withdraw, transfer funds
-- 📈 **Binary Trading**: Time-based options trading with 85% payout
-- 🎫 **Customer Support**: Create and track support tickets
-- 📊 **Transaction History**: Complete audit trail of all operations
-- 👤 **User Profile**: Balance, credit score, account management
+If you encounter any accessibility barriers, please submit an issue or contact the maintainers. Your feedback helps us improve!
 
-### Admin Features
-- 📊 **Dashboard**: Real-time platform statistics
-- 👥 **User Management**: View, suspend, modify user balances
-- 🤖 **AI Arbitrage Control**: Configure and monitor automated trading bots
-- 💬 **Support Management**: Respond to user tickets
-- 📈 **Analytics**: Trade statistics and platform metrics
+## Environment Variables
+To configure **Moekha125-a11y**, the following environment variables may be used:
+- `A11Y_API_KEY`: API key for third-party accessibility services (if used)
+- `A11Y_THEME`: Set UI theme, e.g. `dark`, `light`, `high-contrast`
+- `A11Y_LOG_LEVEL`: Log output level (`error`, `warning`, `info`)
+- `A11Y_BASE_URL`: Base URL for backend integration
 
-## 🛠 Tech Stack
+Set these in your deployment environment (.env file or host settings) as needed.
 
-### Frontend
-- React 18.2.0 + Vite 5.0.0 + Tailwind CSS 3.4.8
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/xiaoli2428/moekha125-a11y.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. (Optional) Set environment variables as described above.
+4. Start the application:
+   ```bash
+   npm start
+   ```
 
-### Backend
-- Node.js + Express.js
-- Supabase (PostgreSQL)
-- JWT Authentication + bcrypt
+## Usage
+Follow the instructions above to get started. For detailed documentation, see [docs/](./docs).
 
-## 📦 Quick Start
+## Contributing
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on bug reports, feature requests, and pull requests.
 
-### Prerequisites
-- Node.js 18+ and npm
-- Supabase account (free tier)
-
-### 1. Install Dependencies
-
-```bash
-# Frontend
-npm install
-
-# Backend
-cd server && npm install && cd ..
-```
-
-### 2. Setup Database
-
-1. Create account at [supabase.com](https://supabase.com)
-2. Create new project
-3. Go to SQL Editor and run `server/database/schema.sql`
-4. Get API credentials from Settings → API
-
-### 3. Configure Environment
-
-Create `server/.env`:
-```env
-PORT=3001
-NODE_ENV=development
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_KEY=your_service_key
-JWT_SECRET=generate_random_64_character_string
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:5173
-```
-
-### 4. Run Development
-
-Terminal 1 - Backend:
-```bash
-cd server && npm run dev
-```
-
-Terminal 2 - Frontend:
-```bash
-npm run dev
-```
-
-Open http://localhost:5173
-
-## 🚀 Deployment
-
-See `DEPLOYMENT.md` for complete guide.
-
-**Quick Deploy:**
-- Frontend: Vercel
-- Backend: Railway or Render  
-- Database: Supabase
-
-## 📚 Documentation
-
-- `README.md` - This file
-- `server/README.md` - Complete API documentation
-- `DEPLOYMENT.md` - Deployment guide
-- `.github/copilot-instructions.md` - Development patterns
-
-## 🔒 Security
-
-- Bcrypt password hashing (10 rounds)
-- JWT token authentication
-- Role-based access control
-- Account suspension/banning
-- CORS protection
-- SQL injection protection
-- Transaction audit trail
-
-## 🤖 Background Jobs
-
-- **Trade Settlement**: Every 10 seconds
-- **AI Arbitrage**: Every 30 seconds
-
-## 📁 Structure
-
-```
-onchainweb/
-├── src/                # Frontend
-│   ├── components/     # UI components
-│   └── services/       # API client
-├── server/            # Backend
-│   ├── controllers/   # Business logic
-│   ├── routes/        # API endpoints
-│   ├── middleware/    # Auth
-│   ├── config/        # DB & JWT
-│   └── database/      # Schema
-└── DEPLOYMENT.md      # Deploy guide
-```
-
-## 🔧 Environment Variables
-
-**Frontend**: `VITE_API_URL`  
-**Backend**: See `server/.env.example`
-
-## 📝 Scripts
-
-Frontend:
-- `npm run dev` - Dev server
-- `npm run build` - Production build
-
-Backend:
-- `npm run dev` - Dev with auto-reload
-- `npm start` - Production
-
-## 🐛 Troubleshooting
-
-See `DEPLOYMENT.md` troubleshooting section.
-
-## 📄 License
-
-MIT License
+## License
+See [LICENSE](./LICENSE) for licensing details.
 
 ---
-
-Built with ❤️ using React, Node.js, and Supabase
+For questions or support, please use the GitHub Issues page.

@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       address
     });
   } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: error.message || 'Internal server error' });
-    }
+    console.error('Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
+}

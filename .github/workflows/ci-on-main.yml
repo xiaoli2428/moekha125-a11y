@@ -43,7 +43,7 @@ jobs:
       # Step 3a: Setup Node.js (with cache)
       - name: Setup Node (with cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'true' }}
-        uses: actions/setup-node@a5c71877ffaa8a30e591806d5d331277c78b0ea6
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -51,7 +51,7 @@ jobs:
       # Step 3b: Setup Node.js (no cache)
       - name: Setup Node (no cache)
         if: ${{ steps.detect.outputs.manager == 'node' && steps.detect.outputs.lockfile == 'false' }}
-        uses: actions/setup-node@a5c71877ffaa8a30e591806d5d331277c78b0ea6
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -78,7 +78,7 @@ jobs:
       # Step 5: Cache pip
       - name: Cache pip
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/cache@c27359c714723c5b3c0b89135da1707c3ea00be2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -87,7 +87,7 @@ jobs:
       # Step 6: Set up Python
       - name: Set up Python
         if: ${{ steps.detect.outputs.manager == 'python' }}
-        uses: actions/setup-python@0a1d0b7a5c714b2c5798d6679213c66080f9a8db
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 

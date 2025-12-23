@@ -22,6 +22,9 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 8000
 
+// Trust proxy for rate limiting (Railway/Vercel sets X-Forwarded-For)
+app.set('trust proxy', 1)
+
 // Rate limiting for auth endpoints (5 attempts per 15 minutes)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -29,6 +32,10 @@ const authLimiter = rateLimit({
   message: 'Too many login attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req, res) => {
+    // Skip rate limiting for health check and non-auth endpoints
+    return req.path === '/health' || !req.path.includes('/auth/')
+  }
 })
 
 // Middleware

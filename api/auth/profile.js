@@ -1,22 +1,32 @@
-import { verifyToken } from '../lib/jwt.js';
-import supabase from '../lib/supabase.js';
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+
+function getSupabase() {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) throw new Error('Supabase config missing');
+    return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+function verifyToken(token) {
+    try {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) throw new Error('JWT_SECRET missing');
+        return jwt.verify(token, secret);
+    } catch (error) {
+        return null;
+    }
+}
 
 export default async function handler(req, res) {
     try {
-        // CORS setup
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-        if (req.method === 'OPTIONS') {
-            return res.status(200).end();
-        }
+        if (req.method === 'OPTIONS') return res.status(200).end();
+        if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-        if (req.method !== 'GET') {
-            return res.status(405).json({ error: 'Method not allowed' });
-        }
-
-        // Get token from Authorization header
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'No token provided' });
@@ -26,10 +36,10 @@ export default async function handler(req, res) {
         const decoded = verifyToken(token);
 
         if (!decoded) {
-            return res.status(401).json({ error: 'Invalid or expired token' });
+            return res.status(401).json({ error: 'Invalid token' });
         }
 
-        // Fetch user profile
+        const supabase = getSupabase();
         const { data: user, error } = await supabase
             .from('users')
             .select('id, email, username, wallet_address, role, balance, credit_score, status, created_at')

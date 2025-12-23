@@ -1,36 +1,26 @@
-// Express server setup
 const express = require('express');
-const rateLimit = require('express-rate-limit');
-const { z } = require('zod');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
 
-// Express-Rate-Limit middleware setup
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the RateLimit-* headers
-  legacyHeaders: false, // Disable the X-RateLimit-* headers
-});
-app.use(limiter);
+// Get allowed origins from environment variable, split by comma
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
 
-// Zod validation example for a POST endpoint
-const schema = z.object({
-  username: z.string().min(3),
-  age: z.number().int().min(1)
-});
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
 
-app.post('/api/data', (req, res) => {
-  const result = schema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(400).json({ error: result.error.errors });
-  }
-  res.status(200).json({ message: 'Data is valid!', data: result.data });
-});
+app.use(cors(corsOptions));
 
-// Server listen
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// ...rest of the server code

@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
-
-// Production API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://moekha125-a11y.onrender.com/api';
+import { authAPI } from '../services/api';
 
 // Detect if we're on mobile
 const isMobile = () => {
@@ -40,9 +38,9 @@ const walletIcons = {
 // Detect wallet type from provider
 const detectWalletType = () => {
   if (typeof window === 'undefined') return null;
-  
+
   const ua = navigator.userAgent.toLowerCase();
-  
+
   // Check user agent first for mobile wallets
   if (ua.includes('trustwallet')) return 'Trust Wallet';
   if (ua.includes('metamask')) return 'MetaMask';
@@ -51,7 +49,7 @@ const detectWalletType = () => {
   if (ua.includes('imtoken')) return 'imToken';
   if (ua.includes('okx')) return 'OKX Wallet';
   if (ua.includes('bitget')) return 'Bitget Wallet';
-  
+
   // Then check ethereum provider flags
   const eth = window.ethereum;
   if (!eth) return null;
@@ -66,7 +64,7 @@ const detectWalletType = () => {
   if (eth.isPhantom) return 'Phantom';
   if (eth.isRabby) return 'Rabby';
   if (eth.isSafePal) return 'SafePal';
-  
+
   return 'Wallet';
 };
 
@@ -74,7 +72,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
   const { open } = useWeb3Modal();
   const { address: modalAddress, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
-  
+
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
   const [selectedWallet, setSelectedWallet] = useState(null);
@@ -98,20 +96,13 @@ export default function MultiWalletConnect({ onWalletLogin }) {
     try {
       const ethersProvider = new ethers.providers.Web3Provider(provider);
       const signer = ethersProvider.getSigner();
-      
+
       const timestamp = Date.now();
       const message = `Sign this message to authenticate with OnchainWeb.\n\nWallet: ${address}\nTimestamp: ${timestamp}`;
-      
-      const signature = await signer.signMessage(message);
-      
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, message, signature }),
-      });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Auth failed');
+      const signature = await signer.signMessage(message);
+
+      const data = await authAPI.walletLogin(address, message, signature);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('walletAddress', address);
@@ -129,8 +120,8 @@ export default function MultiWalletConnect({ onWalletLogin }) {
   useEffect(() => {
     const checkServer = async () => {
       try {
-        const res = await fetch(`${API_URL.replace('/api', '')}/health`, { method: 'GET' });
-        if (res.ok) setServerStatus('online');
+        const result = await authAPI.checkHealth();
+        if (result.status === 'ok') setServerStatus('online');
         else setServerStatus('offline');
       } catch (e) {
         setServerStatus('offline');
@@ -143,29 +134,29 @@ export default function MultiWalletConnect({ onWalletLogin }) {
       const mobile = isMobile();
       const walletBrowser = isWalletBrowser();
       const hasWallet = typeof window !== 'undefined' && (!!window.ethereum || !!window.trustwallet || !!window.phantom?.ethereum);
-      
+
       setIsMobileDevice(mobile);
       setIsInWalletBrowser(walletBrowser);
       setHasInjectedWallet(hasWallet);
-      
+
       if (hasWallet) {
         setDetectedWallet(detectWalletType());
       }
-      
+
       const info = `Mobile: ${mobile}, WalletBrowser: ${walletBrowser}, HasWallet: ${hasWallet}, UA: ${navigator.userAgent.slice(0, 50)}...`;
       setDebugInfo(prev => prev + `\n${info}`);
       console.log('Wallet check:', info);
     };
-    
+
     // Initial check
     checkWallet();
-    
+
     // Check again after delays (some wallets inject late, especially on mobile)
     const timer1 = setTimeout(checkWallet, 500);
     const timer2 = setTimeout(checkWallet, 1500);
     const timer3 = setTimeout(checkWallet, 3000);
     const timer4 = setTimeout(checkWallet, 5000);
-    
+
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -195,12 +186,12 @@ export default function MultiWalletConnect({ onWalletLogin }) {
     try {
       // Get the provider - handle multiple providers which is common on mobile
       let provider = window.ethereum;
-      
+
       // If multiple providers, try to find the one we want
       if (window.ethereum?.providers) {
-        provider = window.ethereum.providers.find(p => p.isMetaMask) || 
-                   window.ethereum.providers.find(p => p.isTrust) || 
-                   window.ethereum.providers[0];
+        provider = window.ethereum.providers.find(p => p.isMetaMask) ||
+          window.ethereum.providers.find(p => p.isTrust) ||
+          window.ethereum.providers[0];
       } else if (window.trustwallet) {
         provider = window.trustwallet;
       } else if (window.phantom?.ethereum) {
@@ -285,7 +276,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
         });
       } catch (signError) {
         console.error('Signature error (hex):', signError);
-        
+
         if (signError.code === 4001) {
           throw new Error('You rejected the signature request.');
         }
@@ -305,21 +296,8 @@ export default function MultiWalletConnect({ onWalletLogin }) {
       console.log('Signature obtained, sending to server...');
 
       // Send to backend
-      const response = await fetch(`${API_URL}/auth/wallet-login`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ address, message, signature }),
-      });
-
-      const data = await response.json();
+      const data = await authAPI.walletLogin(address, message, signature);
       console.log('Server response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Wallet authentication failed');
-      }
 
       // Store auth data
       localStorage.setItem('token', data.token);
@@ -342,7 +320,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
   // Deep links for mobile wallet apps
   const openInWalletApp = (wallet) => {
     const currentUrl = encodeURIComponent(window.location.href);
-    
+
     if (wallet === 'metamask') {
       window.location.href = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
     } else if (wallet === 'trust') {
@@ -370,10 +348,9 @@ export default function MultiWalletConnect({ onWalletLogin }) {
         </button>
         <div className="flex items-center gap-2">
           <span>Server:</span>
-          <div className={`w-1.5 h-1.5 rounded-full ${
-            serverStatus === 'online' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 
+          <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'online' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' :
             serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
-          }`}></div>
+            }`}></div>
           <span className={serverStatus === 'online' ? 'text-green-500/70' : ''}>
             {serverStatus}
           </span>
@@ -392,9 +369,8 @@ export default function MultiWalletConnect({ onWalletLogin }) {
         <button
           onClick={() => connectWallet('injected')}
           disabled={connecting}
-          className={`w-full flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-xl hover:opacity-90 transition disabled:opacity-50 ${
-            connecting ? 'cursor-wait' : ''
-          }`}
+          className={`w-full flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-xl hover:opacity-90 transition disabled:opacity-50 ${connecting ? 'cursor-wait' : ''
+            }`}
         >
           <img src={walletIcons.browser} alt="Wallet" className="w-6 h-6" />
           <span className="font-semibold">
@@ -435,7 +411,7 @@ export default function MultiWalletConnect({ onWalletLogin }) {
           <div className="text-center text-sm text-gray-400 mb-3">
             Open in your wallet app:
           </div>
-          
+
           <button
             onClick={() => openInWalletApp('metamask')}
             className="w-full flex items-center justify-center gap-3 p-4 bg-orange-500/20 border border-orange-500/30 rounded-xl hover:bg-orange-500/30 transition"
@@ -505,11 +481,11 @@ export default function MultiWalletConnect({ onWalletLogin }) {
 
       {/* Info Text */}
       <p className="text-xs text-gray-400 text-center">
-        {hasInjectedWallet 
+        {hasInjectedWallet
           ? 'Click connect and sign the message in your wallet to login'
           : isMobileDevice
-          ? 'Tap a button above to open this page in your wallet app'
-          : 'Supports MetaMask, Trust Wallet, Coinbase Wallet, and all Web3 browsers'}
+            ? 'Tap a button above to open this page in your wallet app'
+            : 'Supports MetaMask, Trust Wallet, Coinbase Wallet, and all Web3 browsers'}
       </p>
     </div>
   );

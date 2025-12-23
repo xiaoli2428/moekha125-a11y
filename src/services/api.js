@@ -52,6 +52,19 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+  },
+
+  walletLogin: (address, message, signature) =>
+    apiCall('/auth/wallet-login', {
+      method: 'POST',
+      body: JSON.stringify({ address, message, signature })
+    }),
+
+  checkHealth: () => {
+    // Health check doesn't need auth token
+    return fetch(`${API_BASE_URL}/health`)
+      .then(r => r.json())
+      .catch(() => ({ status: 'offline' }))
   }
 }
 
@@ -218,17 +231,17 @@ export const adminAPI = {
 
   // Master admin - Admin management
   getAllAdmins: () => apiCall('/admin/admins'),
-  
+
   promoteToAdmin: (userId) =>
     apiCall(`/admin/admins/promote/${userId}`, {
       method: 'POST'
     }),
-  
+
   demoteAdmin: (userId) =>
     apiCall(`/admin/admins/demote/${userId}`, {
       method: 'POST'
     }),
-  
+
   getAdminLogs: (limit = 100, offset = 0) =>
     apiCall(`/admin/admins/logs?limit=${limit}&offset=${offset}`),
 
@@ -361,11 +374,11 @@ export const marketAPI = {
   getPrice: (pair) => apiCall(`/market/price/${pair.replace('/', '-')}`),
 
   // Get OHLCV (candlestick) data
-  getOHLCV: (pair, days = 1) => 
+  getOHLCV: (pair, days = 1) =>
     apiCall(`/market/ohlcv/${pair.replace('/', '-')}?days=${days}`),
 
   // Get market chart data
-  getChart: (pair, days = 1) => 
+  getChart: (pair, days = 1) =>
     apiCall(`/market/chart/${pair.replace('/', '-')}?days=${days}`)
 };
 

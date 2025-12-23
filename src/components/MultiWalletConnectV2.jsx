@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://moekha125-a11y.onrender.com/api';
+import { authAPI } from '../services/api';
 
 const isMobile = () => {
   if (typeof window === 'undefined') return false;
@@ -27,7 +26,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
   const { address: modalAddress, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const { disconnect } = useDisconnect();
-  
+
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -39,19 +38,13 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
   useEffect(() => {
     setIsMobileDevice(isMobile());
     setWalletBrowser(detectWalletBrowser());
-    
+
     const checkServer = async () => {
       try {
-        // Correct health endpoint path
-        const healthUrl = API_URL.replace('/api', '') + '/api/health';
-        console.log('🏥 Checking server health:', healthUrl);
-        const res = await fetch(healthUrl, { 
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-        const data = await res.json();
+        console.log('🏥 Checking server health');
+        const data = await authAPI.checkHealth();
         console.log('🏥 Server response:', data);
-        setServerStatus(res.ok && data.status === 'ok' ? 'online' : 'offline');
+        setServerStatus(data.status === 'ok' ? 'online' : 'offline');
       } catch (e) {
         console.error('🏥 Server check failed:', e);
         setServerStatus('offline');
@@ -66,14 +59,14 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
 
   useEffect(() => {
     console.log('📡 Connection state changed:', { isConnected, modalAddress, hasProvider: !!walletProvider, retries: providerRetries });
-    
+
     if (isConnected && modalAddress && walletProvider) {
       console.log('✓ All conditions met, attempting login...');
       setProviderRetries(0);
       handleWebModalLogin();
     } else if (isConnected && modalAddress && !walletProvider) {
       console.warn('⚠️ Connected but no provider - retry', providerRetries + 1, '/', MAX_PROVIDER_RETRIES);
-      
+
       if (providerRetries < MAX_PROVIDER_RETRIES) {
         // Wait and increment retry counter
         const timeout = setTimeout(() => {
@@ -105,7 +98,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
     if (connecting) return;
     setConnecting(true);
     setError('');
-    
+
     try {
       console.log('🔐 Starting wallet login...');
       console.log('📱 Device:', isMobileDevice ? 'Mobile' : 'Desktop');
@@ -119,10 +112,10 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
 
       const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
       const signer = ethersProvider.getSigner();
-      
+
       const timestamp = Date.now();
       const message = `Sign this message to authenticate with OnchainWeb.\n\nWallet: ${modalAddress}\nTimestamp: ${timestamp}`;
-      
+
       console.log('✍️ Requesting signature...');
       let signature;
       try {
@@ -132,11 +125,11 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
         console.error('❌ Sign error:', signErr);
         throw new Error(`Failed to sign message: ${signErr.message}`);
       }
-      
+
       console.log('📤 Sending auth request to backend...');
       const response = await fetch(`${API_URL}/auth/wallet-login`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -146,7 +139,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       console.log('📊 Backend response status:', response.status);
       const data = await response.json();
       console.log('📦 Response data:', { status: response.status, hasToken: !!data.token });
-      
+
       if (!response.ok) {
         const errorMsg = data.error || data.message || `Server error: ${response.status}`;
         console.error('❌ Server error:', errorMsg);
@@ -160,7 +153,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('walletAddress', modalAddress);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
       console.log('✓ Login successful!');
       setSuccessMessage(`✓ Logged in as ${modalAddress.slice(0, 10)}...`);
       setTimeout(() => {
@@ -170,7 +163,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       console.error('❌ Wallet login error:', err);
       const errorMessage = err.message || 'Connection failed. Please try again.';
       setError(errorMessage);
-      
+
       // Store detailed error info
       const debugData = {
         error: errorMessage,
@@ -191,7 +184,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
-    
+
     if (!email || !password) {
       setError('Please enter email and password');
       return;
@@ -199,7 +192,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
 
     setConnecting(true);
     setError('');
-    
+
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -208,14 +201,14 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
       setSuccessMessage(`✓ Logged in as ${email}`);
       setTimeout(() => {
         if (onWalletLogin) onWalletLogin(data);
@@ -255,7 +248,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
         } : null
       }
     };
-    
+
     const debugText = JSON.stringify(fullDebugInfo, null, 2);
     navigator.clipboard.writeText(debugText).then(() => {
       alert('✓ Debug info copied!\n\nShare this with support if login fails.');
@@ -270,8 +263,8 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
     <div className="space-y-4">
       {/* Debug and Status Bar */}
       <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-gray-500 px-2 py-1 bg-gray-800 rounded">
-        <button 
-          onClick={copyDebugInfo} 
+        <button
+          onClick={copyDebugInfo}
           className="hover:text-white transition"
           title="Copy debug information for support"
         >
@@ -282,11 +275,10 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
             <span className="text-blue-400">🔗 {walletBrowser}</span>
           )}
           <div className="flex items-center gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full ${
-              serverStatus === 'online' ? 'bg-green-500' : 
-              serverStatus === 'offline' ? 'bg-red-500' : 
-              'bg-yellow-500 animate-pulse'
-            }`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'online' ? 'bg-green-500' :
+              serverStatus === 'offline' ? 'bg-red-500' :
+                'bg-yellow-500 animate-pulse'
+              }`}></div>
             <span>Server: {serverStatus}</span>
           </div>
         </div>
@@ -302,7 +294,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
               <span className="ml-2 text-yellow-400">⏳ Waiting for provider ({providerRetries}/{MAX_PROVIDER_RETRIES})</span>
             )}
           </div>
-          <button 
+          <button
             onClick={handleDisconnect}
             className="text-xs px-2 py-1 bg-red-500/20 rounded hover:bg-red-500/30 transition"
           >
@@ -316,7 +308,7 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
         <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm space-y-2">
           <div className="font-semibold">❌ {error}</div>
           {isConnected && (
-            <button 
+            <button
               onClick={handleDisconnect}
               className="text-xs px-3 py-1 bg-red-500/30 rounded hover:bg-red-500/40 transition"
             >
@@ -367,10 +359,10 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       {/* Info for iPhone users */}
       {isMobileDevice && (
         <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-300 text-xs">
-          <strong>💡 iPhone Tips:</strong><br/>
-          • Tap "Connect Wallet" to open wallet selector<br/>
-          • For Coinbase: Ensure you're in the Coinbase app browser, not Safari<br/>
-          • For Onchain: Install from App Store if not present<br/>
+          <strong>💡 iPhone Tips:</strong><br />
+          • Tap "Connect Wallet" to open wallet selector<br />
+          • For Coinbase: Ensure you're in the Coinbase app browser, not Safari<br />
+          • For Onchain: Install from App Store if not present<br />
           • If stuck: Try email login below as backup
         </div>
       )}
@@ -455,10 +447,10 @@ export default function MultiWalletConnectV2({ onWalletLogin }) {
       )}
 
       <p className="text-xs text-gray-500 text-center mt-2">
-        {isConnected 
-          ? (walletProvider 
-              ? '✓ Wallet ready. Complete sign to login.' 
-              : '⏳ Waiting for wallet provider...')
+        {isConnected
+          ? (walletProvider
+            ? '✓ Wallet ready. Complete sign to login.'
+            : '⏳ Waiting for wallet provider...')
           : 'Click "Connect Wallet" to get started'}
       </p>
     </div>

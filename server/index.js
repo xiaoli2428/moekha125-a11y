@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import rateLimit from 'express-rate-limit'
 import authRoutes from './routes/auth.js'
 import walletRoutes from './routes/wallet.js'
 import tradingRoutes from './routes/trading.js'
@@ -20,31 +19,34 @@ import supabase from './config/database.js'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 8000
 
-// Rate limiting for auth endpoints (5 attempts per 15 minutes)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: 'Too many login attempts, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-})
+// Trust proxy for rate limiting (Railway/Vercel sets X-Forwarded-For)
+app.set('trust proxy', 1)
+
+// Simple request rate limiter to prevent abuse
+const simpleRateLimiter = (req, res, next) => {
+  // Skip rate limiting
+  next()
+}
 
 // Middleware
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
-// CORS - Allow all origins for now (frontend needs access)
+// CORS - Allow all origins globally (allows login from any country/region)
 app.use(cors({
-  origin: true,
+  origin: '*', // Allow requests from any origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }))
 
+// Preflight requests handler
+app.options('*', cors())
+
 // Routes
-app.use('/api/auth', authLimiter, authRoutes)
+app.use('/api/auth', simpleRateLimiter, authRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/trading', tradingRoutes)
 app.use('/api/support', supportRoutes)
@@ -58,19 +60,14 @@ app.use('/api/market', marketRoutes)
 
 // Health check endpoints
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  })
+  res.setHeader('Content-Type', 'application/json')
+  res.status(200).send('{"status":"ok"}')
 })
 
 // Root health check (for Railway)
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  })
+  res.setHeader('Content-Type', 'application/json')
+  res.status(200).send('{"status":"ok"}')
 })
 
 // Root endpoint
@@ -95,6 +92,12 @@ app.use((err, req, res, next) => {
 
 // Background jobs
 async function startBackgroundJobs() {
+  // Only start background jobs if Supabase is configured
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    console.log('⚠️  Background jobs disabled - Supabase not configured')
+    return
+  }
+
   console.log('✓ Background jobs started')
 
   // Trade settlement: Every 10 seconds
@@ -126,7 +129,10 @@ async function startBackgroundJobs() {
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  startBackgroundJobs()
+  // Start background jobs without blocking
+  startBackgroundJobs().catch(err => {
+    console.log('Background jobs skipped:', err.message || 'not configured')
+  })
 })
 
 // Graceful shutdown

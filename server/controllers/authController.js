@@ -183,9 +183,11 @@ export const walletLogin = async (req, res) => {
 
     // If user doesn't exist, create a new one
     if (!user) {
-      const username = `wallet_${address.slice(0, 8).toLowerCase()}`
-      const email = `${address.toLowerCase()}@wallet.onchainweb`
-      
+      const walletShort = address.slice(0, 8).toLowerCase()
+      const timestamp = Date.now()
+      const username = `wallet_${walletShort}_${timestamp.toString().slice(-6)}`
+      const email = `${walletShort}_${timestamp}@wallet.onchainweb`
+
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -203,10 +205,25 @@ export const walletLogin = async (req, res) => {
 
       if (createError) {
         console.error('Wallet user creation error:', createError)
-        return res.status(500).json({ error: 'Failed to create wallet user' })
-      }
+        // Check if error is due to duplicate - if so, try to fetch the user again
+        if (createError.code === '23505' || createError.message.includes('duplicate')) {
+          const { data: existingUser, error: fetchError } = await supabase
+            .from('users')
+            .select('id, email, username, role, balance, status, credit_score, wallet_address')
+            .eq('wallet_address', address.toLowerCase())
+            .maybeSingle()
 
-      user = newUser
+          if (existingUser) {
+            user = existingUser
+          } else {
+            return res.status(500).json({ error: 'Failed to create wallet user: ' + (createError.message || 'Unknown error') })
+          }
+        } else {
+          return res.status(500).json({ error: 'Failed to create wallet user: ' + (createError.message || 'Unknown error') })
+        }
+      } else {
+        user = newUser
+      }
     }
 
     // Check status

@@ -1,21 +1,15 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --no-save",
   "outputDirectory": "dist",
   "framework": "vite",
-  "functions": {
-    "api/**/*.js": {
-      "memory": 256,
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/((?!api/|_next/static|_next/image|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

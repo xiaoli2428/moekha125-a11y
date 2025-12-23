@@ -1,0 +1,23 @@
+# Don't deploy these files
+.git
+.gitignore
+README.md
+DEPLOY_*.md
+DEPLOYMENT*.md
+CHANGELOG.md
+CONTRIBUTING.md
+CUSTOM_DOMAIN_SETUP.md
+api/
+server/
+Procfile
+railway.json
+render.yaml
+*.sql
+.env*
+node_modules/
+cypress/
+docs/
+Moekha/
+fast-homepage/
+.github/workflows/
+*.log

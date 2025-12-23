@@ -149,6 +149,44 @@ router.post('/deposit', authenticate, walletController.deposit);
 - **Styling**: Dark theme (bg-gray-900), gradients (purple-600 to indigo-500), mobile-first, glass-morphism (bg-black/50 backdrop-blur-lg)
 - **Routing**: DappPage for web3-heavy features; AppLayout for authenticated dashboard (bottom nav on mobile pages)
 - **Database**: Supabase service role (not anon); use direct client queries, no ORM
+- **API URLs**: ALWAYS use `src/services/api.js` centralized wrapper (not hardcoded URLs in components)
+- **Error responses**: Consistent format `{error: "message"}` in status 400/401/403/500
+
+## Error Handling & Database Patterns
+
+**Backend Supabase queries** — Always destructure and handle errors:
+```javascript
+const { data, error } = await supabase
+  .from('users')
+  .select('*')
+  .eq('id', userId)
+  .single()
+
+if (error) {
+  return res.status(400).json({ error: error.message })
+}
+```
+
+**Response status codes**:
+- `400`: Bad request / validation failure
+- `401`: Missing/invalid auth token
+- `403`: Auth valid but insufficient permissions (e.g., not admin)
+- `500`: Server error (log details, don't expose to client)
+
+**Graceful degradation**: Supabase client in `server/config/database.js` throws only when actually used (not instantiation).
+
+## Web3 Integration
+
+**Web3Modal lazy loading**: Heavy deps (ethers, @web3modal) are excluded from build optimizations. They're only loaded when:
+1. User navigates to DappPage (eager import) or
+2. User clicks "Connect Wallet" button (triggers lazy dynamic import in `src/web3modal/setup.js`)
+
+**Key files**:
+- `src/pages/DappPage.jsx`: Eager import (wallet connect screen)
+- `src/web3modal/setup.js`: Dynamic imports + initialization
+- `vite.config.js`: Vendor chunk separation for bundle optimization
+
+Never import ethers or @web3modal at module root level in non-DappPage components.
 
 ## Environment Variables
 
@@ -167,6 +205,28 @@ JWT_SECRET=random_64_char_string
 JWT_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:5173
 ```
+
+## Critical Development Warnings
+
+⚠️ **API URL Anti-Pattern**: Components across the codebase have hardcoded API URL fallbacks (e.g., `Support.jsx`, `WalletConnect.jsx`, `MultiWalletConnect.jsx`). This is a major issue because during deployment URL changes, you must update multiple files. 
+
+✅ **Solution**: ALL frontend API calls should use `src/services/api.js` centralized wrapper:
+```javascript
+// ✅ ALWAYS DO THIS
+import { walletAPI, tradingAPI } from './services/api'
+const txs = await walletAPI.getTransactions()
+
+// ❌ NEVER DO THIS
+const API_URL = import.meta.env.VITE_API_URL || 'https://hardcoded-url.app/api'
+```
+
+This single source of truth (`api.js`) handles auth token injection, error handling, and respects `VITE_API_URL` environment variable (defaults to `/api` for Vercel).
+
+⚠️ **Other critical patterns**:
+- Never import ethers or @web3modal outside of DappPage context (breaks tree-shaking)
+- Always use `authenticate` middleware for protected routes
+- Check `user.status === 'active'` in auth middleware to prevent suspended accounts
+- Never expose sensitive errors to client — log server-side, return generic messages
 
 ## Deployment
 
@@ -234,3 +294,40 @@ SUPABASE_JWT_SECRET=random_64_char_string
 **Deployment choice**:
 - **Vercel serverless only**: Fast, simple, no separate backend needed (uses `api/` functions)
 - **Express backend + Vercel frontend**: More control, background jobs (trade settlement, arbitrage), better for complex business logic
+## Debugging Deployment URL Issues
+
+If API calls fail after deployment, follow this checklist:
+
+1. **Check VITE_API_URL environment variable**:
+   - Vercel frontend: Set `VITE_API_URL=https://your-backend-url.com/api` in Vercel Environment Variables
+   - If not set, frontend defaults to `/api` (works only if backend is on same domain)
+   - View current value in browser console: `import.meta.env.VITE_API_URL`
+
+2. **Verify centralized API wrapper is used**:
+   ```bash
+   # Search for hardcoded API URLs (should find none in recent code)
+   grep -r "const API_URL = import.meta.env" src/
+   # All calls should use: import { authAPI, walletAPI, ... } from '../services/api'
+   ```
+
+3. **Check backend is responding**:
+   ```bash
+   curl https://your-backend-domain.com/api/health
+   # Should return: {"status":"ok"}
+   ```
+
+4. **CORS issues**: Backend sets `Access-Control-Allow-Origin: *` in `server/index.js`. If still blocked:
+   - Check browser DevTools → Network tab for CORS error details
+   - Verify `CORS` middleware is before routes: `app.use(cors())`
+
+5. **Token authentication fails**: Check if localStorage has `token`:
+   ```javascript
+   // In browser console
+   localStorage.getItem('token')  // Should have JWT
+   // If missing, user isn't logged in
+   ```
+
+6. **Specific endpoint not found**:
+   - Check route registration in `server/index.js` (e.g., `app.use('/api/support', supportRoutes)`)
+   - Verify route file exists (e.g., `server/routes/support.js`)
+   - Check middleware is applied: `router.use(authenticate)` or specific route guards

@@ -18,7 +18,7 @@ jobs:
     steps:
       # Step 1: Checkout repository
       - name: Checkout
-        uses: actions/checkout@4d76017c03a5a4490e0b8b27cccf4805bee2b2b7
+        uses: actions/checkout@v4
 
       # Step 2: Detect language and lockfile
       - name: Detect package manager and lockfile

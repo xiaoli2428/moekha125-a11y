@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     // Find user by email
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, username, password_hash, role, balance, status, credit_score, short_uid')
+      .select('id, email, username, password_hash, role, balance, status, credit_score')
       .eq('email', email)
       .maybeSingle();
 
@@ -67,8 +67,7 @@ export default async function handler(req, res) {
         username: user.username,
         role: user.role || 'user',
         balance: parseFloat(user.balance) || 0,
-        creditScore: user.credit_score || 100,
-        shortUid: user.short_uid
+        creditScore: user.credit_score || 100
       }
     });
   } catch (error) {

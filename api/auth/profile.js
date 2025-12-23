@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         // Fetch user profile
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, email, username, wallet_address, role, balance, credit_score, status, short_uid, created_at')
+            .select('id, email, username, wallet_address, role, balance, credit_score, status, created_at')
             .eq('id', decoded.userId)
             .single();
 
@@ -50,7 +50,6 @@ export default async function handler(req, res) {
             role: user.role || 'user',
             balance: parseFloat(user.balance) || 0,
             creditScore: user.credit_score || 100,
-            shortUid: user.short_uid,
             createdAt: user.created_at
         });
     } catch (error) {

@@ -3,24 +3,6 @@ import { handleCors, setCorsHeaders } from '../../lib/auth.js';
 import supabase from '../../lib/supabase.js';
 import { generateToken } from '../../lib/jwt.js';
 
-async function generateUniqueShortUID() {
-  const maxAttempts = 10;
-  for (let i = 0; i < maxAttempts; i++) {
-    const uid = Math.floor(10000 + Math.random() * 90000).toString();
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('short_uid', uid)
-      .maybeSingle();
-
-    if (!existing) {
-      return uid;
-    }
-  }
-  // Fallback to 6-digit UID if 5-digit is exhausted
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 export default async function handler(req, res) {
   handleCors(req, res);
   setCorsHeaders(res);
@@ -56,13 +38,12 @@ export default async function handler(req, res) {
     // Check if user with this wallet address exists
     let { data: user, error } = await supabase
       .from('users')
-      .select('id, email, username, wallet_address, role, short_uid, created_at')
+      .select('id, email, username, wallet_address, role, created_at')
       .ilike('wallet_address', address)
       .maybeSingle();
 
     // If user doesn't exist, create a new one
     if (!user) {
-      const shortUid = await generateUniqueShortUID();
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;
 
       const { data: newUser, error: createError } = await supabase
@@ -70,11 +51,10 @@ export default async function handler(req, res) {
         .insert({
           username,
           wallet_address: address.toLowerCase(),
-          short_uid: shortUid,
           role: 'user',
           profile_data: {}
         })
-        .select('id, email, username, wallet_address, role, short_uid, created_at')
+        .select('id, email, username, wallet_address, role, created_at')
         .single();
 
       if (createError) {
@@ -102,8 +82,7 @@ export default async function handler(req, res) {
         email: user.email,
         username: user.username,
         walletAddress: user.wallet_address,
-        role: user.role || 'user',
-        shortUid: user.short_uid
+        role: user.role || 'user'
       }
     });
   } catch (error) {

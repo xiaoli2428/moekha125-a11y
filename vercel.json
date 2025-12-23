@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --no-save",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [

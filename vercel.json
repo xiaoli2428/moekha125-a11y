@@ -5,7 +5,11 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/|_next/static|_next/image|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

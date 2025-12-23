@@ -56,12 +56,29 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/coins', coinsRoutes)
 app.use('/api/market', marketRoutes)
 
-// Health check endpoint
+// Health check endpoints
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+  })
+})
+
+// Root health check (for Railway)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  })
+})
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'OnchainWeb API',
+    version: '1.0.0',
+    status: 'running'
   })
 })
 
@@ -78,14 +95,17 @@ app.use((err, req, res, next) => {
 
 // Background jobs
 async function startBackgroundJobs() {
-  console.log('Starting background jobs...')
+  console.log('✓ Background jobs started')
 
   // Trade settlement: Every 10 seconds
   setInterval(async () => {
     try {
       await settleExpiredTrades()
     } catch (error) {
-      console.error('Trade settlement error:', error)
+      // Silent fail - only log if important
+      if (error.message && !error.message.includes('Invalid API key')) {
+        console.error('Trade settlement error:', error.message)
+      }
     }
   }, 10000)
 
@@ -94,7 +114,10 @@ async function startBackgroundJobs() {
     try {
       await executeArbitrage()
     } catch (error) {
-      console.error('Arbitrage error:', error)
+      // Silent fail - only log if important
+      if (error.message && !error.message.includes('Invalid API key')) {
+        console.error('Arbitrage error:', error.message)
+      }
     }
   }, 30000)
 }

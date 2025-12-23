@@ -4,8 +4,10 @@ import supabase from '../../lib/supabase.js';
 import { generateToken } from '../../lib/jwt.js';
 
 export default async function handler(req, res) {
-  handleCors(req, res);
-  setCorsHeaders(res);
+  // CORS setup
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -22,13 +24,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Address, message, and signature are required' });
     }
 
-    // Verify the signature matches the address (ethers v6 syntax)
+    // Verify the signature matches the address (ethers v5 syntax)
     let recoveredAddress;
     try {
-      recoveredAddress = ethers.verifyMessage(message, signature);
+      recoveredAddress = ethers.utils.verifyMessage(message, signature);
     } catch (err) {
       console.error('Signature verification failed:', err);
-      return res.status(400).json({ error: 'Invalid signature' });
+      return res.status(400).json({ error: 'Invalid signature', detail: err.message });
     }
 
     // Check if recovered address matches the claimed address
@@ -43,9 +45,9 @@ export default async function handler(req, res) {
       .ilike('wallet_address', address)
       .maybeSingle();
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Wallet query error:', error);
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: 'Database error', detail: error.message });
     }
 
     // If user doesn't exist, create a new one
@@ -59,7 +61,7 @@ export default async function handler(req, res) {
           wallet_address: address.toLowerCase(),
           role: 'user'
         })
-        .select('id, email, username, wallet_address, role, created_at')
+        .select()
         .single();
 
       if (createError) {
@@ -73,7 +75,7 @@ export default async function handler(req, res) {
     // Generate token
     const token = generateToken({ userId: user.id, role: user.role || 'user' });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Wallet login successful',
       token,
       user: {
@@ -86,6 +88,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Wallet login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', detail: error.message });
   }
 }

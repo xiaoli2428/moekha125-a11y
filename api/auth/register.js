@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     // Create user
     const { data: user, error } = await supabase
       .from('users')
-      .insert({
+      .insert([{
         email,
         password_hash: passwordHash,
         username,
@@ -52,8 +52,8 @@ export default async function handler(req, res) {
         balance: 0,
         status: 'active',
         credit_score: 100
-      })
-      .select('id, email, username, role, balance, credit_score, created_at')
+      }])
+      .select()
       .single();
 
     if (error) {

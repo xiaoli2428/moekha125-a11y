@@ -76,7 +76,8 @@ async function getWeb3Modal() {
  * Called when user clicks "Connect Wallet" on LoginPage
  */
 export async function walletLogin() {
-  const API_URL = '/api';
+  // Use same API URL as api.js - respects VITE_API_URL environment variable
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   try {
     // Check for ethereum provider (native or injected)

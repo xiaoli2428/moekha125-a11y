@@ -1,3 +1,8 @@
+// Static imports (required for Vercel serverless)
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+
+// Main handler
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -7,10 +12,6 @@ export default async function handler(req, res) {
 
     try {
         if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
-        // Dynamic imports
-        const { createClient } = await import('@supabase/supabase-js');
-        const jwt = await import('jsonwebtoken').then(m => m.default);
 
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {

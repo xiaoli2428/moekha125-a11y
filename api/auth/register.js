@@ -1,3 +1,9 @@
+// Static imports (required for Vercel serverless)
+import bcrypt from 'bcrypt';
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+
+// Main handler
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,11 +15,6 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
-
-    // Dynamic imports inside handler
-    const bcrypt = await import('bcrypt').then(m => m.default);
-    const { createClient } = await import('@supabase/supabase-js');
-    const jwt = await import('jsonwebtoken').then(m => m.default);
 
     const { email, password, username } = req.body || {};
 

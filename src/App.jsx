@@ -5,6 +5,7 @@ import { authAPI } from './services/api';
 
 // IMPORTANT: DappPage loads EAGERLY (not lazy) so wallet connect screen appears immediately
 import DappPage from './pages/DappPage';
+import LandingPage from './pages/LandingPage';
 
 // Lazy load all other pages to speed up initial homepage
 const CustomerService = lazy(() => import('./components/CustomerService'));
@@ -229,11 +230,12 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* HOME PAGE - DIRECT TO DAPP (wallet-first flow like ddefi3.com) */}
-          <Route path="/" element={<DappPage />} />
+          {/* LANDING PAGE - Public homepage shown first */}
+          <Route path="/" element={<LandingPage />} />
 
-          {/* Legacy routes for backwards compatibility */}
+          {/* APP/TRADING - Direct access to app with wallet login */}
           <Route path="/app" element={<DappPage />} />
+          {/* Legacy routes for backwards compatibility */}
           <Route path="/login" element={<DappPage />} />
 
           {/* LEGACY DASHBOARD ROUTES (for backwards compatibility) */}

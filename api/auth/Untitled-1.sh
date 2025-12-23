@@ -14,3 +14,5 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
   console.log('⚠️  Background jobs disabled - Supabase not configured')
   return  // Exit early, don't start background jobs
 }
+
+PORT=8000

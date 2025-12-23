@@ -20,7 +20,7 @@ import supabase from './config/database.js'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 8000
 
 // Rate limiting for auth endpoints (5 attempts per 15 minutes)
 const authLimiter = rateLimit({
@@ -35,13 +35,16 @@ const authLimiter = rateLimit({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
-// CORS - Allow all origins for now (frontend needs access)
+// CORS - Allow all origins globally (allows login from any country/region)
 app.use(cors({
-  origin: true,
+  origin: '*', // Allow requests from any origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }))
+
+// Preflight requests handler
+app.options('*', cors())
 
 // Routes
 app.use('/api/auth', authLimiter, authRoutes)

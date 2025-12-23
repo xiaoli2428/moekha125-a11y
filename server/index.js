@@ -95,38 +95,45 @@ app.use((err, req, res, next) => {
 
 // Background jobs
 async function startBackgroundJobs() {
-  console.log('✓ Background jobs started')
+  // Only start background jobs if Supabase is configured
 
-  // Trade settlement: Every 10 seconds
-  setInterval(async () => {
-    try {
-      await settleExpiredTrades()
-    } catch (error) {
-      // Silent fail - only log if important
-      if (error.message && !error.message.includes('Invalid API key')) {
-        console.error('Trade settlement error:', error.message)
-      }
-    }
-  }, 10000)
+}
 
-  // Arbitrage execution: Every 30 seconds
-  setInterval(async () => {
-    try {
-      await executeArbitrage()
-    } catch (error) {
-      // Silent fail - only log if important
-      if (error.message && !error.message.includes('Invalid API key')) {
-        console.error('Arbitrage error:', error.message)
-      }
+console.log('✓ Background jobs started')
+
+// Trade settlement: Every 10 seconds
+setInterval(async () => {
+  try {
+    await settleExpiredTrades()
+  } catch (error) {
+    // Silent fail - only log if important
+    if (error.message && !error.message.includes('Invalid API key')) {
+      console.error('Trade settlement error:', error.message)
     }
-  }, 30000)
+  }
+}, 10000)
+
+// Arbitrage execution: Every 30 seconds
+setInterval(async () => {
+  try {
+    await executeArbitrage()
+  } catch (error) {
+    // Silent fail - only log if important
+    if (error.message && !error.message.includes('Invalid API key')) {
+      console.error('Arbitrage error:', error.message)
+    }
+  }
+}, 30000)
 }
 
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  startBackgroundJobs()
+  // Don't await background jobs - let them start independently
+  startBackgroundJobs().catch(err => {
+    console.log('Background jobs initialization:', err.message || 'disabled')
+  })
 })
 
 // Graceful shutdown

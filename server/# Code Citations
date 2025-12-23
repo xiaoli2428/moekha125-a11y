@@ -1,0 +1,836 @@
+# Code Citations
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "skipLibCheck": true,
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+            "compilerOptions": {
+                "target": "ES2020",
+                "useDefineForClassFields": true,
+                "lib": [
+                    "ES2020",
+                    "DOM",
+                    "DOM.Iterable"
+                ],
+                "module": "ESNext",
+                "skipLibCheck": true,
+                "moduleResolution": "bundler",
+                "allowImportingTsExtensions": true,
+                "resolveJsonModule": true,
+                "isolatedModules": true,
+                "noEmit": true,
+                "jsx": "react-jsx",
+                "strict": true,
+                "noUnusedLocals": true,
+                "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                    "compilerOptions": {
+                        "target": "ES2020",
+                        "useDefineForClassFields": true,
+                        "lib": [
+                            "ES2020",
+                            "DOM",
+                            "DOM.Iterable"
+                        ],
+                        "module": "ESNext",
+                        "skipLibCheck": true,
+                        "moduleResolution": "bundler",
+                        "allowImportingTsExtensions": true,
+                        "resolveJsonModule": true,
+                        "isolatedModules": true,
+                        "noEmit": true,
+                        "jsx": "react-jsx",
+                        "strict": true,
+                        "noUnusedLocals": true,
+                        "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                            "compilerOptions": {
+                                "target": "ES2020",
+                                "useDefineForClassFields": true,
+                                "lib": [
+                                    "ES2020",
+                                    "DOM",
+                                    "DOM.Iterable"
+                                ],
+                                "module": "ESNext",
+                                "skipLibCheck": true,
+                                "moduleResolution": "bundler",
+                                "allowImportingTsExtensions": true,
+                                "resolveJsonModule": true,
+                                "isolatedModules": true,
+                                "noEmit": true,
+                                "jsx": "react-jsx",
+                                "strict": true,
+                                "noUnusedLocals": true,
+                                "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                    "compilerOptions": {
+                                        "target": "ES2020",
+                                        "useDefineForClassFields": true,
+                                        "lib": [
+                                            "ES2020",
+                                            "DOM",
+                                            "DOM.Iterable"
+                                        ],
+                                        "module": "ESNext",
+                                        "skipLibCheck": true,
+                                        "moduleResolution": "bundler",
+                                        "allowImportingTsExtensions": true,
+                                        "resolveJsonModule": true,
+                                        "isolatedModules": true,
+                                        "noEmit": true,
+                                        "jsx": "react-jsx",
+                                        "strict": true,
+                                        "noUnusedLocals": true,
+                                        "noUnusedParameters": true,
+                                        "noFallthroughCasesInSwitch": true
+                                    },
+                                    "include": [
+                                        "src"
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                            "compilerOptions": {
+                                                "target": "ES2020",
+                                                "useDefineForClassFields": true,
+                                                "lib": [
+                                                    "ES2020",
+                                                    "DOM",
+                                                    "DOM.Iterable"
+                                                ],
+                                                "module": "ESNext",
+                                                "skipLibCheck": true,
+                                                "moduleResolution": "bundler",
+                                                "allowImportingTsExtensions": true,
+                                                "resolveJsonModule": true,
+                                                "isolatedModules": true,
+                                                "noEmit": true,
+                                                "jsx": "react-jsx",
+                                                "strict": true,
+                                                "noUnusedLocals": true,
+                                                "noUnusedParameters": true,
+                                                "noFallthroughCasesInSwitch": true
+                                            },
+                                            "include": [
+                                                "src"
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                    "compilerOptions": {
+                                                        "target": "ES2020",
+                                                        "useDefineForClassFields": true,
+                                                        "lib": [
+                                                            "ES2020",
+                                                            "DOM",
+                                                            "DOM.Iterable"
+                                                        ],
+                                                        "module": "ESNext",
+                                                        "skipLibCheck": true,
+                                                        "moduleResolution": "bundler",
+                                                        "allowImportingTsExtensions": true,
+                                                        "resolveJsonModule": true,
+                                                        "isolatedModules": true,
+                                                        "noEmit": true,
+                                                        "jsx": "react-jsx",
+                                                        "strict": true,
+                                                        "noUnusedLocals": true,
+                                                        "noUnusedParameters": true,
+                                                        "noFallthroughCasesInSwitch": true
+                                                    },
+                                                    "include": [
+                                                        "src"
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                            "compilerOptions": {
+                                                                "target": "ES2020",
+                                                                "useDefineForClassFields": true,
+                                                                "lib": [
+                                                                    "ES2020",
+                                                                    "DOM",
+                                                                    "DOM.Iterable"
+                                                                ],
+                                                                "module": "ESNext",
+                                                                "skipLibCheck": true,
+                                                                "moduleResolution": "bundler",
+                                                                "allowImportingTsExtensions": true,
+                                                                "resolveJsonModule": true,
+                                                                "isolatedModules": true,
+                                                                "noEmit": true,
+                                                                "jsx": "react-jsx",
+                                                                "strict": true,
+                                                                "noUnusedLocals": true,
+                                                                "noUnusedParameters": true,
+                                                                "noFallthroughCasesInSwitch": true
+                                                            },
+                                                            "include": [
+                                                                "src"
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                                    "compilerOptions": {
+                                                                        "target": "ES2020",
+                                                                        "useDefineForClassFields": true,
+                                                                        "lib": [
+                                                                            "ES2020",
+                                                                            "DOM",
+                                                                            "DOM.Iterable"
+                                                                        ],
+                                                                        "module": "ESNext",
+                                                                        "skipLibCheck": true,
+                                                                        "moduleResolution": "bundler",
+                                                                        "allowImportingTsExtensions": true,
+                                                                        "resolveJsonModule": true,
+                                                                        "isolatedModules": true,
+                                                                        "noEmit": true,
+                                                                        "jsx": "react-jsx",
+                                                                        "strict": true,
+                                                                        "noUnusedLocals": true,
+                                                                        "noUnusedParameters": true,
+                                                                        "noFallthroughCasesInSwitch": true
+                                                                    },
+                                                                    "include": [
+                                                                        "src"
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                                                            "compilerOptions": {
+                                                                                "target": "ES2020",
+                                                                                "useDefineForClassFields": true,
+                                                                                "lib": [
+                                                                                    "ES2020",
+                                                                                    "DOM",
+                                                                                    "DOM.Iterable"
+                                                                                ],
+                                                                                "module": "ESNext",
+                                                                                "skipLibCheck": true,
+                                                                                "moduleResolution": "bundler",
+                                                                                "allowImportingTsExtensions": true,
+                                                                                "resolveJsonModule": true,
+                                                                                "isolatedModules": true,
+                                                                                "noEmit": true,
+                                                                                "jsx": "react-jsx",
+                                                                                "strict": true,
+                                                                                "noUnusedLocals": true,
+                                                                                "noUnusedParameters": true,
+                                                                                "noFallthroughCasesInSwitch": true
+                                                                            },
+                                                                            "include": [
+                                                                                "src"
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                                                                    "compilerOptions": {
+                                                                                        "target": "ES2020",
+                                                                                        "useDefineForClassFields": true,
+                                                                                        "lib": [
+                                                                                            "ES2020",
+                                                                                            "DOM",
+                                                                                            "DOM.Iterable"
+                                                                                        ],
+                                                                                        "module": "ESNext",
+                                                                                        "skipLibCheck": true,
+                                                                                        "moduleResolution": "bundler",
+                                                                                        "allowImportingTsExtensions": true,
+                                                                                        "resolveJsonModule": true,
+                                                                                        "isolatedModules": true,
+                                                                                        "noEmit": true,
+                                                                                        "jsx": "react-jsx",
+                                                                                        "strict": true,
+                                                                                        "noUnusedLocals": true,
+                                                                                        "noUnusedParameters": true,
+                                                                                        "noFallthroughCasesInSwitch": true
+                                                                                    },
+                                                                                    "include": [
+                                                                                        "src"
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                                                            "compilerOptions": {
+                                                                                                "target": "ES2020",
+                                                                                                "useDefineForClassFields": true,
+                                                                                                "lib": [
+                                                                                                    "ES2020",
+                                                                                                    "DOM",
+                                                                                                    "DOM.Iterable"
+                                                                                                ],
+                                                                                                "module": "ESNext",
+                                                                                                "skipLibCheck": true,
+                                                                                                "moduleResolution": "bundler",
+                                                                                                "allowImportingTsExtensions": true,
+                                                                                                "resolveJsonModule": true,
+                                                                                                "isolatedModules": true,
+                                                                                                "noEmit": true,
+                                                                                                "jsx": "react-jsx",
+                                                                                                "strict": true,
+                                                                                                "noUnusedLocals": true,
+                                                                                                "noUnusedParameters": true,
+                                                                                                "noFallthroughCasesInSwitch": true
+                                                                                            },
+                                                                                            "include": [
+                                                                                                "src"
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                                                                    "compilerOptions": {
+                                                                                                        "target": "ES2020",
+                                                                                                        "useDefineForClassFields": true,
+                                                                                                        "lib": [
+                                                                                                            "ES2020",
+                                                                                                            "DOM",
+                                                                                                            "DOM.Iterable"
+                                                                                                        ],
+                                                                                                        "module": "ESNext",
+                                                                                                        "skipLibCheck": true,
+                                                                                                        "moduleResolution": "bundler",
+                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                        "resolveJsonModule": true,
+                                                                                                        "isolatedModules": true,
+                                                                                                        "noEmit": true,
+                                                                                                        "jsx": "react-jsx",
+                                                                                                        "strict": true,
+                                                                                                        "noUnusedLocals": true,
+                                                                                                        "noUnusedParameters": true,
+                                                                                                        "noFallthroughCasesInSwitch": true
+                                                                                                    },
+                                                                                                    "include": [
+                                                                                                        "src"
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                                                                            "compilerOptions": {
+                                                                                                                "target": "ES2020",
+                                                                                                                "useDefineForClassFields": true,
+                                                                                                                "lib": [
+                                                                                                                    "ES2020",
+                                                                                                                    "DOM",
+                                                                                                                    "DOM.Iterable"
+                                                                                                                ],
+                                                                                                                "module": "ESNext",
+                                                                                                                "skipLibCheck": true,
+                                                                                                                "moduleResolution": "bundler",
+                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                "resolveJsonModule": true,
+                                                                                                                "isolatedModules": true,
+                                                                                                                "noEmit": true,
+                                                                                                                "jsx": "react-jsx",
+                                                                                                                "strict": true,
+                                                                                                                "noUnusedLocals": true,
+                                                                                                                "noUnusedParameters": true,
+                                                                                                                "noFallthroughCasesInSwitch": true
+                                                                                                            },
+                                                                                                            "include": [
+                                                                                                                "src"
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                                                                                                    "compilerOptions": {
+                                                                                                                        "target": "ES2020",
+                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                        "lib": [
+                                                                                                                            "ES2020",
+                                                                                                                            "DOM",
+                                                                                                                            "DOM.Iterable"
+                                                                                                                        ],
+                                                                                                                        "module": "ESNext",
+                                                                                                                        "skipLibCheck": true,
+                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                        "resolveJsonModule": true,
+                                                                                                                        "isolatedModules": true,
+                                                                                                                        "noEmit": true,
+                                                                                                                        "jsx": "react-jsx",
+                                                                                                                        "strict": true,
+                                                                                                                        "noUnusedLocals": true,
+                                                                                                                        "noUnusedParameters": true,
+                                                                                                                        "noFallthroughCasesInSwitch": true
+                                                                                                                    },
+                                                                                                                    "include": [
+                                                                                                                        "src"
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                                                                                                            "compilerOptions": {
+                                                                                                                                "target": "ES2020",
+                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                "lib": [
+                                                                                                                                    "ES2020",
+                                                                                                                                    "DOM",
+                                                                                                                                    "DOM.Iterable"
+                                                                                                                                ],
+                                                                                                                                "module": "ESNext",
+                                                                                                                                "skipLibCheck": true,
+                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                "isolatedModules": true,
+                                                                                                                                "noEmit": true,
+                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                "strict": true,
+                                                                                                                                "noUnusedLocals": true,
+                                                                                                                                "noUnusedParameters": true,
+                                                                                                                                "noFallthroughCasesInSwitch": true
+                                                                                                                            },
+                                                                                                                            "include": [
+                                                                                                                                "src"
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                                                                                                                    "compilerOptions": {
+                                                                                                                                        "target": "ES2020",
+                                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                                        "lib": [
+                                                                                                                                            "ES2020",
+                                                                                                                                            "DOM",
+                                                                                                                                            "DOM.Iterable"
+                                                                                                                                        ],
+                                                                                                                                        "module": "ESNext",
+                                                                                                                                        "skipLibCheck": true,
+                                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                                        "resolveJsonModule": true,
+                                                                                                                                        "isolatedModules": true,
+                                                                                                                                        "noEmit": true,
+                                                                                                                                        "jsx": "react-jsx",
+                                                                                                                                        "strict": true,
+                                                                                                                                        "noUnusedLocals": true,
+    "no
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                                                                                                                            "compilerOptions": {
+                                                                                                                                                "target": "ES2020",
+                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                "lib": [
+                                                                                                                                                    "ES2020",
+                                                                                                                                                    "DOM",
+                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                ],
+                                                                                                                                                "module": "ESNext",
+                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                "noEmit": true,
+                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                "strict": true,
+                                                                                                                                                "noUnusedLocals": true,
+    "no
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                                                                                                                    "compilerOptions": {
+                                                                                                                                                        "target": "ES2020",
+                                                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                                                        "lib": [
+                                                                                                                                                            "ES2020",
+                                                                                                                                                            "DOM",
+                                                                                                                                                            "DOM.Iterable"
+                                                                                                                                                        ],
+                                                                                                                                                        "module": "ESNext",
+                                                                                                                                                        "skipLibCheck": true,
+                                                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                                                        "resolveJsonModule": true,
+                                                                                                                                                        "isolatedModules": true,
+                                                                                                                                                        "noEmit": true,
+                                                                                                                                                        "jsx": "react-jsx",
+                                                                                                                                                        "strict": true,
+                                                                                                                                                        "noUnusedLocals": true,
+    "no
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                                                                                                                            "compilerOptions": {
+                                                                                                                                                                "target": "ES2020",
+                                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                                "lib": [
+                                                                                                                                                                    "ES2020",
+                                                                                                                                                                    "DOM",
+                                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                                ],
+                                                                                                                                                                "module": "ESNext",
+                                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                                "noEmit": true,
+                                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                                "strict": true,
+                                                                                                                                                                "noUnusedLocals": true,
+    "no
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                                                                                                                                    "compilerOptions": {
+                                                                                                                                                                        "target": "ES2020",
+                                                                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                                                                        "lib": [
+                                                                                                                                                                            "ES2020",
+                                                                                                                                                                            "DOM",
+                                                                                                                                                                            "DOM.Iterable"
+                                                                                                                                                                        ],
+                                                                                                                                                                        "module": "ESNext",
+                                                                                                                                                                        "skipLibCheck": true,
+                                                                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                                                                        "resolveJsonModule": true,
+                                                                                                                                                                        "isolatedModules": true,
+                                                                                                                                                                        "noEmit": true,
+                                                                                                                                                                        "jsx": "react-jsx",
+                                                                                                                                                                        "strict": true,
+                                                                                                                                                                        "noUnusedLocals": true,
+                                                                                                                                                                        "noUnusedParameters":
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                                                                                                                                            "compilerOptions": {
+                                                                                                                                                                                "target": "ES2020",
+                                                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                                                "lib": [
+                                                                                                                                                                                    "ES2020",
+                                                                                                                                                                                    "DOM",
+                                                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                                                ],
+                                                                                                                                                                                "module": "ESNext",
+                                                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                                                "noEmit": true,
+                                                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                                                "strict": true,
+                                                                                                                                                                                "noUnusedLocals": true,
+                                                                                                                                                                                "noUnusedParameters":
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                                                                                                                                                                    "compilerOptions": {
+                                                                                                                                                                                        "target": "ES2020",
+                                                                                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                                                                                        "lib": [
+                                                                                                                                                                                            "ES2020",
+                                                                                                                                                                                            "DOM",
+                                                                                                                                                                                            "DOM.Iterable"
+                                                                                                                                                                                        ],
+                                                                                                                                                                                        "module": "ESNext",
+                                                                                                                                                                                        "skipLibCheck": true,
+                                                                                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                                                                                        "resolveJsonModule": true,
+                                                                                                                                                                                        "isolatedModules": true,
+                                                                                                                                                                                        "noEmit": true,
+                                                                                                                                                                                        "jsx": "react-jsx",
+                                                                                                                                                                                        "strict": true,
+                                                                                                                                                                                        "noUnusedLocals": true,
+                                                                                                                                                                                        "noUnusedParameters":
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                                                                                                                                                                            "compilerOptions": {
+                                                                                                                                                                                                "target": "ES2020",
+                                                                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                                                                "lib": [
+                                                                                                                                                                                                    "ES2020",
+                                                                                                                                                                                                    "DOM",
+                                                                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                                                                ],
+                                                                                                                                                                                                "module": "ESNext",
+                                                                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                                                                "noEmit": true,
+                                                                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                                                                "strict": true,
+                                                                                                                                                                                                "noUnusedLocals": true,
+                                                                                                                                                                                                "noUnusedParameters":
+```
+
+
+## License: unknown
+https: //github.com/aJonghunPark/vite-react-ts-boilerplate/blob/c32f648abc232a22b0f6a9b71790ec9735c1263e/README.md
+
+```
+.json
+{
+                                                                                                                                                                                                    "compilerOptions": {"target": "ES2020","useDefineForClassFields": true,"lib": [
+                                                                                                                                                                                                            "ES2020",
+                                                                                                                                                                                                            "DOM",
+                                                                                                                                                                                                            "DOM.Iterable"],"module": "ESNext","skipLibCheck": true,"moduleResolution": "bundler","allowImportingTsExtensions": true,"resolveJsonModule": true,"isolatedModules": true,"noEmit": true,"jsx": "react-jsx","strict": true,"noUnusedLocals": true,"noUnusedParameters": true,"noFallthroughCasesInSwitch": true
+                                                                                                                                                                                                    },
+                                                                                                                                                                                                    "include": ["src"
+```
+
+
+## License: MIT
+https: //github.com/natewong1313/go-react-ssr/blob/960cd71be1380bf0428d790d111df29e5916e9d4/cli/cmd/create/const.go
+
+```
+.json
+{
+                                                                                                                                                                                                            "compilerOptions": {
+                                                                                                                                                                                                                "target": "ES2020",
+                                                                                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                                                                                "lib": [
+                                                                                                                                                                                                                    "ES2020",
+                                                                                                                                                                                                                    "DOM",
+                                                                                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                                                                                ],
+                                                                                                                                                                                                                "module": "ESNext",
+                                                                                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                                                                                "noEmit": true,
+                                                                                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                                                                                "strict": true,
+                                                                                                                                                                                                                "noUnusedLocals": true,
+                                                                                                                                                                                                                "noUnusedParameters": true,
+                                                                                                                                                                                                                "noFallthroughCasesInSwitch": true
+                                                                                                                                                                                                            },
+                                                                                                                                                                                                            "include": [
+                                                                                                                                                                                                                "src"
+```
+
+
+## License: unknown
+https: //github.com/nocobase/nocobase/blob/f1f9f3ec288d104f7bc101a5505562a8037b2c44/packages/core/client/.dumi/theme/slots/PreviewerActions.tsx
+
+```
+.json
+{
+                                                                                                                                                                                                                    "compilerOptions": {
+                                                                                                                                                                                                                        "target": "ES2020",
+                                                                                                                                                                                                                        "useDefineForClassFields": true,
+                                                                                                                                                                                                                        "lib": [
+                                                                                                                                                                                                                            "ES2020",
+                                                                                                                                                                                                                            "DOM",
+                                                                                                                                                                                                                            "DOM.Iterable"
+                                                                                                                                                                                                                        ],
+                                                                                                                                                                                                                        "module": "ESNext",
+                                                                                                                                                                                                                        "skipLibCheck": true,
+                                                                                                                                                                                                                        "moduleResolution": "bundler",
+                                                                                                                                                                                                                        "allowImportingTsExtensions": true,
+                                                                                                                                                                                                                        "resolveJsonModule": true,
+                                                                                                                                                                                                                        "isolatedModules": true,
+                                                                                                                                                                                                                        "noEmit": true,
+                                                                                                                                                                                                                        "jsx": "react-jsx",
+                                                                                                                                                                                                                        "strict": true,
+                                                                                                                                                                                                                        "noUnusedLocals": true,
+                                                                                                                                                                                                                        "noUnusedParameters": true,
+                                                                                                                                                                                                                        "noFallthroughCasesInSwitch": true
+                                                                                                                                                                                                                    },
+                                                                                                                                                                                                                    "include": [
+                                                                                                                                                                                                                        "src"
+```
+
+
+## License: MIT
+https: //github.com/noahgsolomon/Codefoli/blob/2202ba68ac4b3294191eddc4fa550c541afeb7ba/lambda/codefolio-react-download.mjs
+
+```
+.json
+{
+                                                                                                                                                                                                                            "compilerOptions": {
+                                                                                                                                                                                                                                "target": "ES2020",
+                                                                                                                                                                                                                                "useDefineForClassFields": true,
+                                                                                                                                                                                                                                "lib": [
+                                                                                                                                                                                                                                    "ES2020",
+                                                                                                                                                                                                                                    "DOM",
+                                                                                                                                                                                                                                    "DOM.Iterable"
+                                                                                                                                                                                                                                ],
+                                                                                                                                                                                                                                "module": "ESNext",
+                                                                                                                                                                                                                                "skipLibCheck": true,
+                                                                                                                                                                                                                                "moduleResolution": "bundler",
+                                                                                                                                                                                                                                "allowImportingTsExtensions": true,
+                                                                                                                                                                                                                                "resolveJsonModule": true,
+                                                                                                                                                                                                                                "isolatedModules": true,
+                                                                                                                                                                                                                                "noEmit": true,
+                                                                                                                                                                                                                                "jsx": "react-jsx",
+                                                                                                                                                                                                                                "strict": true,
+                                                                                                                                                                                                                                "noUnusedLocals": true,
+                                                                                                                                                                                                                                "noUnusedParameters": true,
+                                                                                                                                                                                                                                "noFallthroughCasesInSwitch": true
+                                                                                                                                                                                                                            },
+                                                                                                                                                                                                                            "include": [
+                                                                                                                                                                                                                                "src"
+```
+

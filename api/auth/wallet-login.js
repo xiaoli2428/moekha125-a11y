@@ -1,17 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
 import { ethers } from 'ethers';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
-
-function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-}
+import { handleCors, setCorsHeaders } from '../../lib/auth.js';
+import supabase from '../../lib/supabase.js';
+import { generateToken } from '../../lib/jwt.js';
 
 async function generateUniqueShortUID() {
   const maxAttempts = 10;
@@ -22,7 +12,7 @@ async function generateUniqueShortUID() {
       .select('id')
       .eq('short_uid', uid)
       .maybeSingle();
-    
+
     if (!existing) {
       return uid;
     }
@@ -31,19 +21,14 @@ async function generateUniqueShortUID() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
-
 export default async function handler(req, res) {
+  handleCors(req, res);
   setCorsHeaders(res);
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -79,7 +64,7 @@ export default async function handler(req, res) {
     if (!user) {
       const shortUid = await generateUniqueShortUID();
       const username = `wallet_${address.slice(0, 8).toLowerCase()}`;
-      
+
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({

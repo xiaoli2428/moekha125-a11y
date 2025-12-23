@@ -1,15 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
+import { handleCors, setCorsHeaders, authenticate } from '../../lib/auth.js';
+import supabase from '../../lib/supabase.js';
 
 // Default deposit addresses if none configured by admin
 const DEFAULT_ADDRESSES = [
@@ -21,12 +11,13 @@ const DEFAULT_ADDRESSES = [
 ];
 
 export default async function handler(req, res) {
+  handleCors(req, res);
   setCorsHeaders(res);
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -41,7 +32,7 @@ export default async function handler(req, res) {
 
     // If table doesn't exist or no addresses configured, return defaults
     if (error || !addresses || addresses.length === 0) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         addresses: DEFAULT_ADDRESSES.map(a => ({
           coin_symbol: a.coin_symbol,
           network: a.network,
@@ -54,7 +45,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Get deposit addresses error:', error);
     // Return defaults on error
-    return res.status(200).json({ 
+    return res.status(200).json({
       addresses: DEFAULT_ADDRESSES.map(a => ({
         coin_symbol: a.coin_symbol,
         network: a.network,

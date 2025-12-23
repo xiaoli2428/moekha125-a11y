@@ -1,28 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
-
-function setCorsHeaders(res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
-
-function verifyToken(token) {
-    try {
-        return jwt.verify(token, JWT_SECRET);
-    } catch (error) {
-        return null;
-    }
-}
+import { handleCors, setCorsHeaders, authenticate } from '../../lib/auth.js';
+import supabase from '../../lib/supabase.js';
 
 export default async function handler(req, res) {
+    handleCors(req, res);
     setCorsHeaders(res);
 
     if (req.method === 'OPTIONS') {

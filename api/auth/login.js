@@ -1,31 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
-
-function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-}
-
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
+import { handleCors, setCorsHeaders } from '../../lib/auth.js';
+import supabase from '../../lib/supabase.js';
+import { generateToken } from '../../lib/jwt.js';
 
 export default async function handler(req, res) {
+  handleCors(req, res);
   setCorsHeaders(res);
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -48,7 +33,7 @@ export default async function handler(req, res) {
       console.error('Login query error:', error);
       return res.status(500).json({ error: 'Database error' });
     }
-    
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

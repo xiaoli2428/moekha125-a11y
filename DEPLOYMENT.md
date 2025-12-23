@@ -19,21 +19,42 @@ Complete deployment instructions for Onchainweb platform.
    - Database Password: (save this securely)
    - Region: Choose closest to your users
 
-### 2. Load Database Schema
+### 2. Load Database Schema (In This Order)
 
-1. Go to SQL Editor in Supabase dashboard
-2. Create new query
-3. Copy entire contents of `server/database/schema.sql`
-4. Paste and click "Run"
-5. Verify tables created in Table Editor
+Open **SQL Editor** in Supabase dashboard and run each file in order:
+
+#### Step 1: Core Schema
+1. Create new query
+2. Open `server/database/schema.sql`
+3. Copy entire contents and paste into SQL Editor
+4. Click **Run** and verify no errors
+5. Check "Tables" section - should see: users, wallets, transactions, binary_trades, support_tickets
+
+#### Step 2: Additional Tables (Run Each Separately)
+5. Run `server/database/deposit_addresses_and_coins.sql` (deposit addresses for cryptocurrencies)
+6. Run `server/database/kyc_tables.sql` (KYC verification tables)
+7. Run `server/database/trading_levels.sql` (user trading tier configurations)
+8. Run `server/database/master_account.sql` (master admin role setup)
+
+**⚠️ Important**: Run these files in order because they may have foreign key dependencies.
 
 ### 3. Get API Credentials
 
 1. Go to Settings → API
-2. Copy these values:
-   - Project URL (e.g., `https://xxx.supabase.co`)
-   - `anon` public key
-   - `service_role` secret key (⚠️ keep secure)
+2. Copy and save:
+   - **Project URL**: `https://xxx.supabase.co`
+   - **anon key**: `eyJ...` (public, used by frontend)
+   - **service_role secret**: `eyJ...` (⚠️ KEEP SECURE - used by backend only)
+
+### 4. Verify Schema Loaded
+
+In Supabase SQL Editor, run:
+```sql
+SELECT COUNT(*) as table_count FROM information_schema.tables 
+WHERE table_schema = 'public';
+```
+
+Expected: At least 10+ tables should exist
 
 ## Part 2: Backend Deployment (Railway)
 

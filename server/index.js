@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import rateLimit from 'express-rate-limit'
 import authRoutes from './routes/auth.js'
 import walletRoutes from './routes/wallet.js'
 import tradingRoutes from './routes/trading.js'
@@ -21,6 +22,15 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Rate limiting for auth endpoints (5 attempts per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login attempts, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 // Middleware
 app.use(cors({
   origin: [
@@ -39,6 +49,10 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`)
   next()
 })
+
+// Apply rate limiter to auth routes
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
 
 // Routes
 app.use('/api/auth', authRoutes)

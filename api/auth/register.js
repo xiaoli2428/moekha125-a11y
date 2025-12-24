@@ -1,9 +1,7 @@
-// Static imports (required for Vercel serverless)
 import bcrypt from 'bcrypt';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 
-// Main handler
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -11,30 +9,29 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Ensure req.body is present and parsed
+  const { email, password, username } = req.body || {};
+
+  if (!email || !password || !username) {
+    return res.status(400).json({ error: 'Email, password, and username required' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be 6+ characters' });
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) {
+    return res.status(500).json({ error: 'Supabase config missing' });
+  }
+  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const { email, password, username } = req.body || {};
-
-    if (!email || !password || !username) {
-      return res.status(400).json({ error: 'Email, password, and username required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be 6+ characters' });
-    }
-
-    // Initialize Supabase
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY;
-    if (!url || !key) {
-      return res.status(500).json({ error: 'Supabase config missing' });
-    }
-
-    const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-
     // Check email exists
     const { data: existing } = await supabase
       .from('users')
@@ -66,7 +63,7 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Registration error:', error);
-      return res.status(500).json({ error: 'Failed to create user', detail: error.message });
+      return res.status(500).json({ error: 'Failed to create user' });
     }
 
     // Generate token
@@ -83,7 +80,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ error: error.message || 'Server error' });
+    return res.status(500).json({ error: 'Server error' });
   }
-}
 }
